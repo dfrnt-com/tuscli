@@ -26,6 +26,7 @@ $ node dist/tuscli.js
 ```
 $ node dist/tuscli.js --export-schema
 $ node dist/tuscli.js --query-document '{"type":"Person"}'
+$ node dist/tuscli.js --read Person/johndoe
 $ node dist/tuscli.js --delete Person/johndoe
 $ node dist/tuscli.js --instance schema --create "`pwd`/schemaDocument.json"
 ```
