@@ -10,6 +10,8 @@ Interact with TerminusDB from the commandline to import/export documents and set
 
 * Load documents into TerminusDB from the cli
 * Interact with schema, system and instance parts of TerminusDB from the cli
+* It was easier for me to get started in Javascript 😄
+* Consider using the official [TerminusDB Python scaffolding cli](https://terminusdb.github.io/terminusdb-client-python/Scaffolding_CLI_Tool.html) instead, one that has these and more advanced features! 
 
 ## Usage
 
