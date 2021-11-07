@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/tuscli.js",
     "build": "npx tsc --noEmit false --module commonjs",
-    "nexe": "npx tsc --noEmit false --module commonjs && npx nexe dist/tuscli.js",
+    "buildnexe": "npx tsc --noEmit false --module commonjs && npx nexe --build -o tuscli",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

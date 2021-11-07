@@ -23,6 +23,13 @@ $ npm install
 $ node dist/tuscli.js
 ```
 
+To build an executable tuscli file and embed node.js in it:
+
+```
+$ npm buildnexe
+$ ./tuscli --help
+```
+
 ## Examples
 
 ```
@@ -44,7 +51,7 @@ Options:
   -V, --version                                output the version number
   -c, --create                                 Create document from provided file
   -r, --read <document-id>                     Read document-id (Type/id)
-  -s, --schemaFrame <document-id>              Get the schema frame for a type/trait/enum
+  -s, --schemaFrame <document-id>              Get the schema frame for a type/subdoctype/enum
   -d, --delete <document-id>                   Delete document
   -q, --query-documents <query-template-json>  List documents of type, example: {"type":"Person"}
   -e, --export-schema                          Export/show instance schema JSON

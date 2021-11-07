@@ -10,7 +10,7 @@ program
   .description("TerminusDB Javascript cli: tuscli [options] <fileName(s)>")
   .option('-c, --create', 'Create document from provided file')
   .option('-r, --read <document-id>', 'Read document-id (Type/id)')
-  .option('-s, --schemaFrame <document-id>', 'Get the schema frame for a type/trait/enum')
+  .option('-s, --schemaFrame <document-id>', 'Get the schema frame for a type/subdoctype/enum')
   //.option('-u, --update <document-id>', 'Update document')
   .option('-d, --delete <document-id>', 'Delete document')
   .option('-q, --query-documents <query-template-json>', 'List documents of type, example: {"type":"Person"}')
