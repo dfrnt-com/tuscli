@@ -1,4 +1,4 @@
-# tuscli - TerminusDB Javascript document client
+# tuscli - Independent TerminusDB Javascript document client
 
 Interact with TerminusDB from the commandline to import/export documents and setup the schema.
 
