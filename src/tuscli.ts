@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import TerminusClient from '@terminusdb/terminusdb-client';
 import { Command } from 'commander';
 import Debug from "debug";
