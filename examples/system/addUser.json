@@ -1,0 +1,5 @@
+  {
+    "@type": "User",
+    "capability": [ "Capability/server_access" ],
+    "name": "johndoe@example.com"
+  }

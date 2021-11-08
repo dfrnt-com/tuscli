@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "TerminusDB Javascript CLI",
   "main": "dist/tuscli.js",
+  "bin": {
+    "tuscli": "./dist/tuscli.js"
+  },
   "scripts": {
     "start": "node dist/tuscli.js",
     "build": "npx tsc --noEmit false --module commonjs",
