@@ -13,6 +13,14 @@ Interact with TerminusDB from the commandline to import/export documents and set
 * It was easier for me to get started in Javascript 😄
 * Consider using the official [TerminusDB Python scaffolding cli](https://terminusdb.github.io/terminusdb-client-python/Scaffolding_CLI_Tool.html) instead, one that has these and more advanced features! 
 
+## Project goals
+
+* Make it easy to import/export schema/system/instance TerminusDB documents to/from disk
+* Make it easy to interact with TerminusDB from the command line
+* Show simple usage of the Javascript TermimusDB SDK
+* Enable interaction with other on-disk JSON manipulation tools
+* Easy of use, stability and correctness to be a higher priority than many features
+
 ## Usage
 
 Interact with TerminusDB from the commandline to import/export documents and setup the schema.
@@ -69,6 +77,12 @@ Options:
 * Clone the repo
 * Share a pull request
 * Open an issue
+
+## What needs help
+
+* Identify missing features and file issues (such as update document that is missing)
+* Usability/naming of the cli user interface (early feedback)
+* Usage examples (scripts with documents)
 
 ## Dependencies and mentions
 
