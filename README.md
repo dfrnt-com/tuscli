@@ -6,21 +6,6 @@ Interact with TerminusDB from the commandline to import/export documents and set
 
 * [NodeJS](https://nodejs.org/en/)
 
-## Motivation and Features
-
-* Load documents into TerminusDB from the cli
-* Interact with schema, system and instance parts of TerminusDB from the cli
-* It was easier for me to get started in Javascript 😄
-* Consider using the official [TerminusDB Python scaffolding cli](https://terminusdb.github.io/terminusdb-client-python/Scaffolding_CLI_Tool.html) instead, one that has these and more advanced features! 
-
-## Project goals
-
-* Make it easy to import/export schema/system/instance TerminusDB documents to/from disk
-* Make it easy to interact with TerminusDB from the command line
-* Show simple usage of the Javascript TermimusDB SDK
-* Enable interaction with other on-disk JSON manipulation tools
-* Easy of use, stability and correctness to be a higher priority than many features
-
 ## Usage
 
 Interact with TerminusDB from the commandline to import/export documents and setup the schema.
@@ -31,7 +16,14 @@ $ npm install
 $ node dist/tuscli.js
 ```
 
-To build an executable tuscli file and embed node.js in it:
+Install tuscli globally on your system
+
+```
+$ sudo npm install -g @hoijnet/tuscli
+```
+
+
+To build an executable tuscli file with embedded node.js in it:
 
 ```
 $ npm buildnexe
@@ -47,6 +39,21 @@ $ node dist/tuscli.js --read Person/johndoe
 $ node dist/tuscli.js --delete Person/johndoe
 $ node dist/tuscli.js --instance schema --create "`pwd`/schemaDocument.json"
 ```
+
+## Motivation and Features
+
+* Load documents into TerminusDB from the cli
+* Interact with schema, system and instance parts of TerminusDB from the cli
+* It was easier for me to get started in Javascript 😄
+* Consider using the official [TerminusDB Python scaffolding cli](https://terminusdb.github.io/terminusdb-client-python/Scaffolding_CLI_Tool.html) instead, one that has these and more advanced features! 
+
+## Project goals
+
+* Make it easy to import/export schema/system/instance TerminusDB documents to/from disk
+* Make it easy to interact with TerminusDB from the command line
+* Show simple usage of the Javascript TermimusDB SDK
+* Enable interaction with other on-disk JSON manipulation tools
+* Easy of use, stability and correctness to be a higher priority than many features
 
 ## tuscli options
 
