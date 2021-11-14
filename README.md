@@ -90,6 +90,7 @@ Options:
 * Identify missing features and file issues (such as update document that is missing)
 * Usability/naming of the cli user interface (early feedback)
 * Usage examples (scripts with documents)
+* Make it more robust, this is an early version!
 
 ## Dependencies and mentions
 
