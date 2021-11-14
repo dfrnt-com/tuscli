@@ -7,12 +7,12 @@ import fs from 'fs';
 const program = new Command();
 
 program
-  .version('0.0.1')
+  .version('0.0.3')
   .description("TerminusDB Javascript cli: tuscli [options] <fileName(s)>")
   .option('-c, --create', 'Create document from provided file')
   .option('-r, --read <document-id>', 'Read document-id (Type/id)')
   .option('-s, --schemaFrame <document-id>', 'Get the schema frame for a type/subdoctype/enum')
-  //.option('-u, --update <document-id>', 'Update document')
+  .option('-u, --update <document-id>', 'Update document')
   .option('-d, --delete <document-id>', 'Delete document')
   .option('-q, --query-documents <query-template-json>', 'List documents of type, example: {"type":"Person"}')
   .option('-e, --export-schema', 'Export/show instance schema JSON')
@@ -47,13 +47,15 @@ interface ITerminusConnectionObject {
 const btoa = (b: string) => Buffer.from(b, 'base64').toString('binary')
 const getFileJson = (path: string) => {
   try {
-    if (fs.existsSync(path)) {
+    if (!fs.existsSync(path)) { throw new Error("File does not exist") }
+    try {
       return JSON.parse(fs.readFileSync(path).toString());
-    } else {
-      throw new Error("Could not read file");
+    } catch (e) {
+      throw new Error("Could not parse the file correctly, likely bad JSON")
     }
   } catch (e) {
-    console.log("Could not read file: ", path);
+    console.error("Could handle input file correctly: ", path);
+    console.log(e);
     process.exit(1);
   }
 }
@@ -141,6 +143,15 @@ export const cli = async () => {
       program.args
         .map(fileName => getFileJson(fileName))
         .map(async obj => { await client.addDocument(obj, { graph_type: database }) }
+        )
+    )
+  }
+
+  if (options.update) {
+    debug(
+      program.args
+        .map(fileName => getFileJson(fileName))
+        .map(async obj => { await client.updateDocument(obj, { id: options.update, graph_type: database }) }
         )
     )
   }
