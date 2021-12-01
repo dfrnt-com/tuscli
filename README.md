@@ -22,11 +22,18 @@ Install tuscli globally on your system
 $ sudo npm install -g @hoijnet/tuscli
 ```
 
+Build a docker image with tuscli as a binary in it
+
+```
+$ docker build --pull -t tuscli -f docker/Dockerfile .
+$ docker run --rm -it tuscli tuscli --help
+```
+
 
 To build an executable tuscli file with embedded node.js in it:
 
 ```
-$ npm buildnexe
+$ npm run buildnexe
 $ ./tuscli --help
 ```
 
@@ -38,6 +45,8 @@ $ node dist/tuscli.js --query-document '{"type":"Person"}'
 $ node dist/tuscli.js --read Person/johndoe
 $ node dist/tuscli.js --delete Person/johndoe
 $ node dist/tuscli.js --instance schema --create "`pwd`/schemaDocument.json"
+$ node run buildnexe
+$ ./tuscli --instance schema --update Person ./person.json
 ```
 
 ## Motivation and Features
@@ -67,6 +76,7 @@ Options:
   -c, --create                                 Create document from provided file
   -r, --read <document-id>                     Read document-id (Type/id)
   -s, --schemaFrame <document-id>              Get the schema frame for a type/subdoctype/enum
+  -u, --update <document-id>                   Update document
   -d, --delete <document-id>                   Delete document
   -q, --query-documents <query-template-json>  List documents of type, example: {"type":"Person"}
   -e, --export-schema                          Export/show instance schema JSON
@@ -87,7 +97,7 @@ Options:
 
 ## What needs help
 
-* Identify missing features and file issues (such as update document that is missing)
+* Identify missing features and file issues
 * Usability/naming of the cli user interface (early feedback)
 * Usage examples (scripts with documents)
 * Make it more robust, this is an early version!
