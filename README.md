@@ -1,4 +1,4 @@
-# tuscli - Independent TerminusDB Javascript document client
+# tuscli - Independent TerminusDB Javascript document cli
 
 Interact with TerminusDB from the commandline to import/export documents and setup the schema.
 
@@ -27,7 +27,7 @@ Build a docker image with tuscli as a binary in it, note that nexe itself takes 
 ```
 $ docker build --pull -t tuscli -f docker/Dockerfile .
 $ docker run --rm -it tuscli --help
-$ echo '{ "@id": "newenum", "@type": "Enum", "@value": [ "mytest" ] }' > json/newenum.json
+$ echo '{ "@id": "newenum", "@type": "Enum", "@value": [ "mytest" ] }' > examples/newenum.json
 $ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" -v "`pwd`"/examples:/json tuscli -i schema -c /json/newenum.json
 ```
 
@@ -93,9 +93,11 @@ Options:
 
 ## Contributing
 
-* Clone the repo
-* Share a pull request
-* Open an issue
+This is an independent single-contributor project (so far) done in my free time so issues may take time to get resolved (pull requests get issues resolved the fastest).
+
+* Clone [hoijnet/tuscli](https://github.com/hoijnet/tuscli)
+* Share a [pull request on hoijnet/tuscli](https://github.com/hoijnet/tuscli/pulls)
+* Open an issue on [Github hoijnet/tuscli](https://github.com/hoijnet/tuscli/issues)
 
 ## What needs help
 
