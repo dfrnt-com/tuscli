@@ -22,11 +22,13 @@ Install tuscli globally on your system
 $ sudo npm install -g @hoijnet/tuscli
 ```
 
-Build a docker image with tuscli as a binary in it
+Build a docker image with tuscli as a binary in it, note that nexe itself takes a long time to compile.
 
 ```
 $ docker build --pull -t tuscli -f docker/Dockerfile .
-$ docker run --rm -it tuscli tuscli --help
+$ docker run --rm -it tuscli --help
+$ echo '{ "@id": "newenum", "@type": "Enum", "@value": [ "mytest" ] }' > json/newenum.json
+$ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" -v "`pwd`"/examples:/json tuscli -i schema -c /json/newenum.json
 ```
 
 
