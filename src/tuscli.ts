@@ -7,7 +7,7 @@ import fs from 'fs';
 const program = new Command();
 
 program
-  .version('0.0.3')
+  .version('0.0.6')
   .description("TerminusDB Javascript cli: tuscli [options] <fileName(s)>")
   .option('-c, --create', 'Create document from provided file')
   .option('-r, --read <document-id>', 'Read document-id (Type/id)')
