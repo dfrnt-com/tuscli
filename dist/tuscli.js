@@ -60,6 +60,7 @@ program
     .option('-z, --dump-profile', 'Show the default or current connection profile, and how to set it')
     .option('-i, --instance <instance|schema>', 'Document instance, default is instance')
     .option('-x, --system', 'Connect to system database')
+    .option('-o, --optimize <main>', 'Optimize and do delta rollups on a branch')
     .parse(process.argv);
 var DatabaseSelection;
 (function (DatabaseSelection) {
@@ -139,9 +140,9 @@ if (options.dumpProfile) {
     process.exit(0);
 }
 var cli = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var connectClient, client, selectDatabase, database, _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
-    return __generator(this, function (_l) {
-        switch (_l.label) {
+    var connectClient, client, selectDatabase, database, _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+    return __generator(this, function (_o) {
+        switch (_o.label) {
             case 0:
                 debug('Options: ', options);
                 debug('Remaining arguments: ', program.args);
@@ -159,7 +160,7 @@ var cli = function () { return __awaiter(void 0, void 0, void 0, function () {
                 }
                 return [4 /*yield*/, client.connect()];
             case 1:
-                _l.sent();
+                _o.sent();
                 selectDatabase = function (selectedDatabase) {
                     switch (selectedDatabase) {
                         case "schema":
@@ -178,8 +179,8 @@ var cli = function () { return __awaiter(void 0, void 0, void 0, function () {
                 _b = (_a = console).log;
                 return [4 /*yield*/, client.getSchema()];
             case 2:
-                _b.apply(_a, [_l.sent()]);
-                _l.label = 3;
+                _b.apply(_a, [_o.sent()]);
+                _o.label = 3;
             case 3:
                 if (options.create) {
                     debug(program.args
@@ -211,8 +212,8 @@ var cli = function () { return __awaiter(void 0, void 0, void 0, function () {
                 _d = (_c = console).log;
                 return [4 /*yield*/, client.queryDocument(JSON.parse(options.queryDocuments), { "as_list": true, graph_type: database })];
             case 4:
-                _d.apply(_c, [_l.sent()]);
-                _l.label = 5;
+                _d.apply(_c, [_o.sent()]);
+                _o.label = 5;
             case 5:
                 if (!options.read) return [3 /*break*/, 7];
                 if (!options.read)
@@ -220,8 +221,8 @@ var cli = function () { return __awaiter(void 0, void 0, void 0, function () {
                 _f = (_e = console).log;
                 return [4 /*yield*/, client.getDocument({ id: options.read, graph_type: database })];
             case 6:
-                _f.apply(_e, [_l.sent()]);
-                _l.label = 7;
+                _f.apply(_e, [_o.sent()]);
+                _o.label = 7;
             case 7:
                 if (!options.schemaFrame) return [3 /*break*/, 9];
                 if (!options.schemaFrame)
@@ -229,8 +230,8 @@ var cli = function () { return __awaiter(void 0, void 0, void 0, function () {
                 _h = (_g = console).log;
                 return [4 /*yield*/, client.getSchemaFrame(options.schemaFrame)];
             case 8:
-                _h.apply(_g, [_l.sent()]);
-                _l.label = 9;
+                _h.apply(_g, [_o.sent()]);
+                _o.label = 9;
             case 9:
                 if (!options.delete) return [3 /*break*/, 11];
                 if (!options.delete)
@@ -238,9 +239,18 @@ var cli = function () { return __awaiter(void 0, void 0, void 0, function () {
                 _k = (_j = console).log;
                 return [4 /*yield*/, client.deleteDocument({ id: [options.delete], graph_type: database })];
             case 10:
-                _k.apply(_j, [_l.sent()]);
-                _l.label = 11;
-            case 11: return [2 /*return*/];
+                _k.apply(_j, [_o.sent()]);
+                _o.label = 11;
+            case 11:
+                if (!options.optimize) return [3 /*break*/, 13];
+                if (!options.optimize)
+                    throw new Error("What to optimize was not provided");
+                _m = (_l = console).log;
+                return [4 /*yield*/, client.optimizeBranch(options.optimize)];
+            case 12:
+                _m.apply(_l, [_o.sent()]);
+                _o.label = 13;
+            case 13: return [2 /*return*/];
         }
     });
 }); };

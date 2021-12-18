@@ -20,6 +20,7 @@ program
   .option('-z, --dump-profile', 'Show the default or current connection profile, and how to set it')
   .option('-i, --instance <instance|schema>', 'Document instance, default is instance')
   .option('-x, --system', 'Connect to system database')
+  .option('-o, --optimize <main>', 'Optimize and do delta rollups on a branch')
   .parse(process.argv);
 
 enum DatabaseSelection { SCHEMA = "schema", INSTANCE = "instance" }
@@ -174,6 +175,11 @@ export const cli = async () => {
   if (options.delete) {
     if (!options.delete) throw new Error("Document to delete was not provided")
     console.log(await client.deleteDocument({ id: [options.delete], graph_type: database }));
+  }
+
+  if (options.optimize) {
+    if (!options.optimize) throw new Error("What to optimize was not provided");
+    console.log(await client.optimizeBranch(options.optimize));
   }
 }
 

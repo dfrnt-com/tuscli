@@ -1,6 +1,6 @@
 {
   "name": "@hoijnet/tuscli",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "TerminusDB Javascript CLI",
   "main": "dist/tuscli.js",
   "bin": {
@@ -10,6 +10,8 @@
     "start": "node dist/tuscli.js",
     "build": "npx tsc --noEmit false --module commonjs",
     "buildnexe": "npx tsc --noEmit false --module commonjs && npx nexe --build -o tuscli",
+    "dockerize": "docker build --pull -t hoijnet/tuscli -f docker/Dockerfile .",
+    "dockerpush": "docker push hoijnet/tuscli",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -23,7 +25,7 @@
   },
   "homepage": "https://github.com/hoijnet/tuscli#readme",
   "dependencies": {
-    "@terminusdb/terminusdb-client": "^10.0.1",
+    "@terminusdb/terminusdb-client": "git+https://github.com/hoijnet/terminusdb-client-js.git#544029e",
     "commander": "^8.3.0",
     "debug": "^4.3.2"
   },

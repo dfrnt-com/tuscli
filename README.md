@@ -88,6 +88,7 @@ Options:
                                                how to set it
   -i, --instance <instance|schema>             Document instance, default is instance
   -x, --system                                 Connect to system database
+  -o, --optimize <main>                        Optimize and do delta rollups on a branch
   -h, --help                                   display help for command
 ```
 
@@ -101,10 +102,24 @@ This is an independent single-contributor project (so far) done in my free time 
 
 ## What needs help
 
+* To file issue on: Make output into `JSON.stringify(...,null,2)` output for proper quotes
 * Identify missing features and file issues
 * Usability/naming of the cli user interface (early feedback)
 * Usage examples (scripts with documents)
 * Make it more robust, this is an early version!
+
+## Howto release new version and ensure all builds work first
+
+To put into a `Makefile` at some point
+
+```
+$ # Bump version number in package.json
+$ npm run buildnexe
+$ npm run dockerize
+$ git push
+$ npm push
+$ docker push hoijnet/tuscli
+```
 
 ## Dependencies and mentions
 
