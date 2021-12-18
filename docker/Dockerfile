@@ -1,6 +1,6 @@
 FROM ubuntu:latest AS build
 
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y nodejs python npm
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y nodejs python npm git
 
 RUN mkdir -p /build
 COPY src /build/src
