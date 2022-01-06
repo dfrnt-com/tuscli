@@ -8,6 +8,16 @@ Interact with TerminusDB from the commandline to import/export documents and set
 
 ## Usage
 
+```bash
+$ export TUSPARAMS="$(echo '{"url":"http://localhost:6363","key":"password","user":"admin","organisation":"admin","db":"mydb"}' | base64 )"
+$ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --help
+$ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --export-schema
+$ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --query-document '{"type":"Person"}'
+$ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --read Person/johndoe
+$ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --delete Person/johndoe
+$ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --instance schema --read Person
+```
+
 Interact with TerminusDB from the commandline to import/export documents and setup the schema.
 
 ```

@@ -12,7 +12,7 @@ COPY tsconfig.json /build/
 WORKDIR /build
 
 RUN npm install
-RUN npm run buildnexe
+RUN npm run buildnexe-docker
 
 FROM ubuntu:latest
 COPY --from=build /build/tuscli /bin/tuscli

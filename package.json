@@ -10,6 +10,7 @@
     "start": "node dist/tuscli.js",
     "build": "npx tsc --noEmit false --module commonjs",
     "buildnexe": "npx tsc --noEmit false --module commonjs && npx nexe --build -o tuscli",
+    "buildnexe-docker": "npx tsc --noEmit false --module commonjs && npx nexe -o tuscli",
     "dockerize": "docker build --pull -t hoijnet/tuscli -f docker/Dockerfile .",
     "dockerpush": "docker push hoijnet/tuscli",
     "test": "echo \"Error: no test specified\" && exit 1"
