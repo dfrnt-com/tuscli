@@ -267,8 +267,7 @@ var cli = function () { return __awaiter(void 0, void 0, void 0, function () {
                 _s.label = 13;
             case 13:
                 if (!(typeof options.createDatabase === "string")) return [3 /*break*/, 16];
-                createJsonFromFileNameParameter_1 = program.args[0] // Not supported by commander
-                ;
+                createJsonFromFileNameParameter_1 = program.args[0];
                 if (!options.createDatabase)
                     throw new Error("Database name to create was not provided");
                 return [4 /*yield*/, (function () { return __awaiter(void 0, void 0, void 0, function () { return __generator(this, function (_a) {
@@ -279,7 +278,7 @@ var cli = function () { return __awaiter(void 0, void 0, void 0, function () {
             case 14:
                 createJson = _s.sent();
                 if (createJson.schema === "false") {
-                    throw new Error("Error: schema element must be a boolean or undefined, and not \"false\". If undefined, it defaults to true.");
+                    throw new Error('Error: schema element must be a boolean or undefined, and not "false". If undefined, it defaults to true.');
                 }
                 databaseCreationOptions = {
                     schema: typeof createJson.schema === "boolean" ? createJson.schema : true,
