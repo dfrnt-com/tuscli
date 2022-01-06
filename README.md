@@ -8,6 +8,8 @@ Interact with TerminusDB from the commandline to import/export documents and set
 
 ## Usage
 
+When running with docker and docker-compose, use the correct host, and add the docker network to connect run the command with.
+
 ```bash
 $ export TUSPARAMS="$(echo '{"url":"http://localhost:6363","key":"password","user":"admin","organisation":"admin","db":"mydb"}' | base64 )"
 $ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --help
