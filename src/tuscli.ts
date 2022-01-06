@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import TerminusClient from "@terminusdb/terminusdb-client";
 import { Command } from "commander";
+import colorize from "json-colorizer";
 import Debug from "debug";
 import fs from "fs";
 
@@ -101,6 +102,11 @@ const connectionObject = findConnectionConfiguration(options.jsonFile);
 
 debug(exampleConnObject);
 
+const consoleDumpJson = (obj: object) => {
+  const json = JSON.stringify(obj, null, 2);
+  console.log(colorize(json, { pretty: true }));
+};
+
 if (options.dumpProfile) {
   const dumpInfo = Object.assign({}, connectionObject);
   if (dumpInfo.key) {
@@ -114,7 +120,7 @@ if (options.dumpProfile) {
   console.log("To debug, export DEBUG='*'");
   console.log("");
   console.warn("Current profile (except for keys):");
-  console.log(dumpInfo);
+  consoleDumpJson(dumpInfo);
   process.exit(0);
 }
 
@@ -161,7 +167,7 @@ export const cli = async () => {
   }
 
   if (options.exportSchema) {
-    console.log(await client.getSchema());
+    consoleDumpJson(await client.getSchema());
   }
 
   if (options.create) {
@@ -186,27 +192,27 @@ export const cli = async () => {
 
   if (typeof options.queryDocuments === "string") {
     if (!options.queryDocuments) throw new Error("No query template provided");
-    console.log(await client.queryDocument(JSON.parse(options.queryDocuments), { as_list: true, graph_type: database }));
+    consoleDumpJson(await client.queryDocument(JSON.parse(options.queryDocuments), { as_list: true, graph_type: database }));
   }
 
   if (typeof options.read === "string") {
     if (!options.read) throw new Error("No documentId to read provided");
-    console.log(await client.getDocument({ id: options.read, graph_type: database }));
+    consoleDumpJson(await client.getDocument({ id: options.read, graph_type: database }));
   }
 
   if (typeof options.schemaFrame === "string") {
     if (!options.schemaFrame) throw new Error("No documentId to get the frame for provided");
-    console.log(await client.getSchemaFrame(options.schemaFrame));
+    consoleDumpJson(await client.getSchemaFrame(options.schemaFrame));
   }
 
   if (typeof options.delete === "string") {
     if (!options.delete) throw new Error("Document to delete was not provided");
-    console.log(await client.deleteDocument({ id: [options.delete], graph_type: database }));
+    consoleDumpJson(await client.deleteDocument({ id: [options.delete], graph_type: database }));
   }
 
   if (typeof options.optimize === "string") {
     if (!options.optimize) throw new Error("What to optimize was not provided");
-    console.log(await client.optimizeBranch(options.optimize));
+    consoleDumpJson(await client.optimizeBranch(options.optimize));
   }
 
   if (typeof options.createDatabase === "string") {
@@ -223,12 +229,12 @@ export const cli = async () => {
       label: typeof createJson.label === "string" ? createJson.label : "",
       comment: typeof createJson.comment === "string" ? createJson.comment : "",
     };
-    console.log(await client.createDatabase(options.createDatabase, databaseCreationOptions));
+    consoleDumpJson(await client.createDatabase(options.createDatabase, databaseCreationOptions));
   }
 
   if (typeof options.deleteDatabase === "string") {
     if (!options.deleteDatabase) throw new Error("Database name to delete/kill was not provided");
-    console.log(await client.deleteDatabase(options.deleteDatabase, connectionObject.organisation));
+    consoleDumpJson(await client.deleteDatabase(options.deleteDatabase, connectionObject.organisation));
   }
 };
 
