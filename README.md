@@ -20,33 +20,32 @@ $ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --instance schema
 
 Interact with TerminusDB from the commandline to import/export documents and setup the schema.
 
-```
+```bash
 $ export TUSPARAMS="$(echo '{"url":"http://localhost:6363","key":"password","user":"admin","organisation":"admin","db":"mydb"}' | base64 )"
 $ npm install
 $ node dist/tuscli.js
 ```
 
-Install tuscli globally on your system
-
-```
-$ sudo npm install -g @hoijnet/tuscli
-```
-
 Build a docker image with tuscli as a binary in it, note that nexe itself takes a long time to compile.
 
-```
+```bash
 $ docker build --pull -t tuscli -f docker/Dockerfile .
 $ docker run --rm -it tuscli --help
 $ echo '{ "@id": "newenum", "@type": "Enum", "@value": [ "mytest" ] }' > examples/newenum.json
 $ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" -v "`pwd`"/examples:/json tuscli -i schema -c /json/newenum.json
 ```
 
-
 To build an executable tuscli file with embedded node.js in it:
 
-```
+```bash
 $ npm run buildnexe
 $ ./tuscli --help
+```
+
+Install tuscli globally on your system
+
+```bash
+$ sudo npm install -g @hoijnet/tuscli
 ```
 
 ## Examples
@@ -84,22 +83,22 @@ Usage: tuscli [options]
 TerminusDB Javascript cli: tuscli [options] <fileName(s)>
 
 Options:
-  -V, --version                                output the version number
-  -c, --create                                 Create document from provided file
-  -r, --read <document-id>                     Read document-id (Type/id)
-  -s, --schemaFrame <document-id>              Get the schema frame for a type/subdoctype/enum
-  -u, --update <document-id>                   Update document
-  -d, --delete <document-id>                   Delete document
-  -q, --query-documents <query-template-json>  List documents of type, example: {"type":"Person"}
-  -e, --export-schema                          Export/show instance schema JSON
-  -p, --profile <json-file>                    JSON-formatted connection profile, or set env
-                                               TUSPARAMS in base64 encoding
-  -z, --dump-profile                           Show the default or current connection profile, and
-                                               how to set it
-  -i, --instance <instance|schema>             Document instance, default is instance
-  -x, --system                                 Connect to system database
-  -o, --optimize <main>                        Optimize and do delta rollups on a branch
-  -h, --help                                   display help for command
+  -V, --version                                 output the version number
+  -c, --create                                  create document from provided file
+  -r, --read <document-id>                      read document-id (Type/id)
+  -s, --schemaFrame <document-id>               get the schema frame for a type/subdoctype/enum
+  -u, --update <document-id>                    update document
+  -d, --delete <document-id>                    delete document
+  -q, --query-documents <query-template-json>   list documents of type, example: {"type":"Person"}
+  -e, --export-schema                           export/show instance schema JSON
+  -p, --profile <json-file>                     JSON-formatted connection profile, or set env TUSPARAMS in base64 encoding
+  -z, --dump-profile                            show the default or current connection profile, and how to set it
+  -i, --instance <instance|schema>              specify instance or schema graph, default is instance
+  -x, --system                                  connect to system database
+  -o, --optimize <main>                         optimize and do delta rollups on a branch
+  --createDatabase <database-id> <create-json>  create database/data product, default JSON: {"schema":true, "label":"","comment":""}
+  --deleteDatabase <database-id>                delete database/data product
+  -h, --help                                    display help for command
 ```
 
 ## Contributing
