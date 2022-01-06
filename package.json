@@ -1,6 +1,6 @@
 {
   "name": "@hoijnet/tuscli",
-  "version": "0.0.6",
+  "version": "0.0.8",
   "description": "TerminusDB Javascript CLI",
   "main": "dist/tuscli.js",
   "bin": {
@@ -26,14 +26,14 @@
   },
   "homepage": "https://github.com/hoijnet/tuscli#readme",
   "dependencies": {
-    "@terminusdb/terminusdb-client": "git+https://github.com/hoijnet/terminusdb-client-js.git#544029e",
+    "@terminusdb/terminusdb-client": "10.0.2",
     "commander": "^8.3.0",
-    "debug": "^4.3.2"
+    "debug": "^4.3.3"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
-    "@types/node": "^16.11.6",
+    "@types/node": "^16.11.19",
     "nexe": "^4.0.0-beta.19",
-    "typescript": "^4.4.4"
+    "typescript": "^4.5.4"
   }
 }
