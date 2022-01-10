@@ -113,7 +113,6 @@ This is an independent single-contributor project (so far) done in my free time 
 
 ## What needs help
 
-* To file issue on: Make output into `JSON.stringify(...,null,2)` output for proper quotes
 * Identify missing features and file issues
 * Usability/naming of the cli user interface (early feedback)
 * Usage examples (scripts with documents)

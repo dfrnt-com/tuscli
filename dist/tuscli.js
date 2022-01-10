@@ -43,6 +43,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.cli = void 0;
 var terminusdb_client_1 = __importDefault(require("@terminusdb/terminusdb-client"));
 var commander_1 = require("commander");
+var json_colorizer_1 = __importDefault(require("json-colorizer"));
 var debug_1 = __importDefault(require("debug"));
 var fs_1 = __importDefault(require("fs"));
 var program = new commander_1.Command();
@@ -125,6 +126,10 @@ var exampleConnObject = JSON.stringify({
 });
 var connectionObject = findConnectionConfiguration(options.jsonFile);
 debug(exampleConnObject);
+var consoleDumpJson = function (obj) {
+    var json = JSON.stringify(obj, null, 2);
+    console.log((0, json_colorizer_1.default)(json, { pretty: true }));
+};
 if (options.dumpProfile) {
     var dumpInfo = Object.assign({}, connectionObject);
     if (dumpInfo.key) {
@@ -138,13 +143,13 @@ if (options.dumpProfile) {
     console.log("To debug, export DEBUG='*'");
     console.log("");
     console.warn("Current profile (except for keys):");
-    console.log(dumpInfo);
+    consoleDumpJson(dumpInfo);
     process.exit(0);
 }
 var cli = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var connectClient, client, selectDatabase, database, _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, createJsonFromFileNameParameter_1, createJson, databaseCreationOptions, _o, _p, _q, _r;
-    return __generator(this, function (_s) {
-        switch (_s.label) {
+    var connectClient, client, selectDatabase, database, _a, _b, _c, _d, _e, _f, createJsonFromFileNameParameter_1, createJson, databaseCreationOptions, _g, _h;
+    return __generator(this, function (_j) {
+        switch (_j.label) {
             case 0:
                 debug("Options: ", options);
                 debug("Remaining arguments: ", program.args);
@@ -171,7 +176,7 @@ var cli = function () { return __awaiter(void 0, void 0, void 0, function () {
                 }
                 return [4 /*yield*/, client.connect()];
             case 1:
-                _s.sent();
+                _j.sent();
                 selectDatabase = function (selectedDatabase) {
                     switch (selectedDatabase) {
                         case "schema":
@@ -187,11 +192,11 @@ var cli = function () { return __awaiter(void 0, void 0, void 0, function () {
                     client.setSystemDb();
                 }
                 if (!options.exportSchema) return [3 /*break*/, 3];
-                _b = (_a = console).log;
+                _a = consoleDumpJson;
                 return [4 /*yield*/, client.getSchema()];
             case 2:
-                _b.apply(_a, [_s.sent()]);
-                _s.label = 3;
+                _a.apply(void 0, [_j.sent()]);
+                _j.label = 3;
             case 3:
                 if (options.create) {
                     debug(program.args
@@ -224,47 +229,47 @@ var cli = function () { return __awaiter(void 0, void 0, void 0, function () {
                 if (!(typeof options.queryDocuments === "string")) return [3 /*break*/, 5];
                 if (!options.queryDocuments)
                     throw new Error("No query template provided");
-                _d = (_c = console).log;
+                _b = consoleDumpJson;
                 return [4 /*yield*/, client.queryDocument(JSON.parse(options.queryDocuments), { as_list: true, graph_type: database })];
             case 4:
-                _d.apply(_c, [_s.sent()]);
-                _s.label = 5;
+                _b.apply(void 0, [_j.sent()]);
+                _j.label = 5;
             case 5:
                 if (!(typeof options.read === "string")) return [3 /*break*/, 7];
                 if (!options.read)
                     throw new Error("No documentId to read provided");
-                _f = (_e = console).log;
+                _c = consoleDumpJson;
                 return [4 /*yield*/, client.getDocument({ id: options.read, graph_type: database })];
             case 6:
-                _f.apply(_e, [_s.sent()]);
-                _s.label = 7;
+                _c.apply(void 0, [_j.sent()]);
+                _j.label = 7;
             case 7:
                 if (!(typeof options.schemaFrame === "string")) return [3 /*break*/, 9];
                 if (!options.schemaFrame)
                     throw new Error("No documentId to get the frame for provided");
-                _h = (_g = console).log;
+                _d = consoleDumpJson;
                 return [4 /*yield*/, client.getSchemaFrame(options.schemaFrame)];
             case 8:
-                _h.apply(_g, [_s.sent()]);
-                _s.label = 9;
+                _d.apply(void 0, [_j.sent()]);
+                _j.label = 9;
             case 9:
                 if (!(typeof options.delete === "string")) return [3 /*break*/, 11];
                 if (!options.delete)
                     throw new Error("Document to delete was not provided");
-                _k = (_j = console).log;
+                _e = consoleDumpJson;
                 return [4 /*yield*/, client.deleteDocument({ id: [options.delete], graph_type: database })];
             case 10:
-                _k.apply(_j, [_s.sent()]);
-                _s.label = 11;
+                _e.apply(void 0, [_j.sent()]);
+                _j.label = 11;
             case 11:
                 if (!(typeof options.optimize === "string")) return [3 /*break*/, 13];
                 if (!options.optimize)
                     throw new Error("What to optimize was not provided");
-                _m = (_l = console).log;
+                _f = consoleDumpJson;
                 return [4 /*yield*/, client.optimizeBranch(options.optimize)];
             case 12:
-                _m.apply(_l, [_s.sent()]);
-                _s.label = 13;
+                _f.apply(void 0, [_j.sent()]);
+                _j.label = 13;
             case 13:
                 if (!(typeof options.createDatabase === "string")) return [3 /*break*/, 16];
                 createJsonFromFileNameParameter_1 = program.args[0];
@@ -276,7 +281,7 @@ var cli = function () { return __awaiter(void 0, void 0, void 0, function () {
                         .then(function (res) { return res; })
                         .catch(function () { return ({}); })];
             case 14:
-                createJson = _s.sent();
+                createJson = _j.sent();
                 if (createJson.schema === "false") {
                     throw new Error('Error: schema element must be a boolean or undefined, and not "false". If undefined, it defaults to true.');
                 }
@@ -285,20 +290,20 @@ var cli = function () { return __awaiter(void 0, void 0, void 0, function () {
                     label: typeof createJson.label === "string" ? createJson.label : "",
                     comment: typeof createJson.comment === "string" ? createJson.comment : "",
                 };
-                _p = (_o = console).log;
+                _g = consoleDumpJson;
                 return [4 /*yield*/, client.createDatabase(options.createDatabase, databaseCreationOptions)];
             case 15:
-                _p.apply(_o, [_s.sent()]);
-                _s.label = 16;
+                _g.apply(void 0, [_j.sent()]);
+                _j.label = 16;
             case 16:
                 if (!(typeof options.deleteDatabase === "string")) return [3 /*break*/, 18];
                 if (!options.deleteDatabase)
                     throw new Error("Database name to delete/kill was not provided");
-                _r = (_q = console).log;
+                _h = consoleDumpJson;
                 return [4 /*yield*/, client.deleteDatabase(options.deleteDatabase, connectionObject.organisation)];
             case 17:
-                _r.apply(_q, [_s.sent()]);
-                _s.label = 18;
+                _h.apply(void 0, [_j.sent()]);
+                _j.label = 18;
             case 18: return [2 /*return*/];
         }
     });
