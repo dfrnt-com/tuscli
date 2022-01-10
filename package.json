@@ -28,7 +28,9 @@
   "dependencies": {
     "@terminusdb/terminusdb-client": "10.0.2",
     "commander": "^8.3.0",
-    "debug": "^4.3.3"
+    "debug": "^4.3.3",
+    "json-colorizer": "^2.2.2",
+    "tslib": "^2.3.1"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
