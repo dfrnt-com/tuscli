@@ -1,6 +1,6 @@
 {
   "name": "@hoijnet/tuscli",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "TerminusDB Javascript CLI",
   "main": "dist/tuscli.js",
   "bin": {
@@ -34,8 +34,8 @@
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
-    "@types/node": "^16.11.19",
+    "@types/node": "^16.11.21",
     "nexe": "^4.0.0-beta.19",
-    "typescript": "^4.5.4"
+    "typescript": "^4.5.5"
   }
 }

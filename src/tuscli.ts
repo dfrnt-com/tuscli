@@ -8,7 +8,7 @@ import fs from "fs";
 const program = new Command();
 
 program
-  .version("0.0.9")
+  .version("0.1.0")
   .description("TerminusDB Javascript cli: tuscli [options] <fileName(s)>")
   .option("-c, --create", "create document from provided file")
   .option("-r, --read <document-id>", "read document-id (Type/id)")
@@ -19,14 +19,18 @@ program
   .option("-e, --export-schema", "export/show instance schema JSON")
   .option("-p, --profile <json-file>", "JSON-formatted connection profile, or set env TUSPARAMS in base64 encoding")
   .option("-z, --dump-profile", "show the default or current connection profile, and how to set it")
-  .option("-i, --instance <instance|schema>", "document instance, default is instance")
-  .option("-x, --system", "connect to system database")
   .option("-o, --optimize <main>", "optimize and do delta rollups on a branch")
   .option(
     "--createDatabase <database-id> <create-json>",
     'create database/data product, default JSON: {"schema":true, "label": "", "comment":""}'
   )
   .option("--deleteDatabase <database-id>", "delete database/data product")
+  .option("--createBranch <branch-id> <true/false>", "create branch, true for empty branch")
+  .option("--deleteBranch <branch-id>", "delete branch")
+  .option("--branches", "pull list of branched in the data product")
+  .option("-x, --system", "connect to system database")
+  .option("-i, --instance <instance|schema>", "document instance, default is instance")
+  .option("-b, --branch <branch-id>", "select active branch")
   .parse(process.argv);
 
 enum DatabaseSelection {
@@ -166,6 +170,10 @@ export const cli = async () => {
     client.setSystemDb();
   }
 
+  if (options.branch) {
+    client.checkout(options.branch);
+  }
+
   if (options.exportSchema) {
     consoleDumpJson(await client.getSchema());
   }
@@ -235,6 +243,23 @@ export const cli = async () => {
   if (typeof options.deleteDatabase === "string") {
     if (!options.deleteDatabase) throw new Error("Database name to delete/kill was not provided");
     consoleDumpJson(await client.deleteDatabase(options.deleteDatabase, connectionObject.organisation));
+  }
+
+  if (typeof options.createBranch === "string") {
+    const createEmptyBranch = program.args[0];
+    if (createEmptyBranch === "true") {
+      consoleDumpJson(await client.branch(options.createBranch, true));
+    } else {
+      consoleDumpJson(await client.branch(options.createBranch, false));
+    }
+  }
+
+  if (typeof options.deleteBranch === "string") {
+    consoleDumpJson(await client.deleteBranch(options.deleteBranch));
+  }
+
+  if (options.branches) {
+    consoleDumpJson(await client.getBranches());
   }
 };
 

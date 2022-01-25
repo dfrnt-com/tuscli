@@ -11,6 +11,7 @@ COPY package-lock.json /build/
 COPY tsconfig.json /build/
 WORKDIR /build
 
+RUN rm package-lock.json
 RUN npm install
 RUN npm run buildnexe-docker
 

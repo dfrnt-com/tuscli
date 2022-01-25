@@ -10,7 +10,7 @@ var debug_1 = (0, tslib_1.__importDefault)(require("debug"));
 var fs_1 = (0, tslib_1.__importDefault)(require("fs"));
 var program = new commander_1.Command();
 program
-    .version("0.0.9")
+    .version("0.1.0")
     .description("TerminusDB Javascript cli: tuscli [options] <fileName(s)>")
     .option("-c, --create", "create document from provided file")
     .option("-r, --read <document-id>", "read document-id (Type/id)")
@@ -21,11 +21,15 @@ program
     .option("-e, --export-schema", "export/show instance schema JSON")
     .option("-p, --profile <json-file>", "JSON-formatted connection profile, or set env TUSPARAMS in base64 encoding")
     .option("-z, --dump-profile", "show the default or current connection profile, and how to set it")
-    .option("-i, --instance <instance|schema>", "document instance, default is instance")
-    .option("-x, --system", "connect to system database")
     .option("-o, --optimize <main>", "optimize and do delta rollups on a branch")
     .option("--createDatabase <database-id> <create-json>", 'create database/data product, default JSON: {"schema":true, "label": "", "comment":""}')
     .option("--deleteDatabase <database-id>", "delete database/data product")
+    .option("--createBranch <branch-id> <true/false>", "create branch, true for empty branch")
+    .option("--deleteBranch <branch-id>", "delete branch")
+    .option("--branches", "pull list of branched in the data product")
+    .option("-x, --system", "connect to system database")
+    .option("-i, --instance <instance|schema>", "document instance, default is instance")
+    .option("-b, --branch <branch-id>", "select active branch")
     .parse(process.argv);
 var DatabaseSelection;
 (function (DatabaseSelection) {
@@ -109,9 +113,9 @@ if (options.dumpProfile) {
     process.exit(0);
 }
 var cli = function () { return (0, tslib_1.__awaiter)(void 0, void 0, void 0, function () {
-    var connectClient, client, selectDatabase, database, _a, _b, _c, _d, _e, _f, createJsonFromFileNameParameter_1, createJson, databaseCreationOptions, _g, _h;
-    return (0, tslib_1.__generator)(this, function (_j) {
-        switch (_j.label) {
+    var connectClient, client, selectDatabase, database, _a, _b, _c, _d, _e, _f, createJsonFromFileNameParameter_1, createJson, databaseCreationOptions, _g, _h, createEmptyBranch, _j, _k, _l, _m;
+    return (0, tslib_1.__generator)(this, function (_o) {
+        switch (_o.label) {
             case 0:
                 debug("Options: ", options);
                 debug("Remaining arguments: ", program.args);
@@ -138,7 +142,7 @@ var cli = function () { return (0, tslib_1.__awaiter)(void 0, void 0, void 0, fu
                 }
                 return [4 /*yield*/, client.connect()];
             case 1:
-                _j.sent();
+                _o.sent();
                 selectDatabase = function (selectedDatabase) {
                     switch (selectedDatabase) {
                         case "schema":
@@ -153,12 +157,15 @@ var cli = function () { return (0, tslib_1.__awaiter)(void 0, void 0, void 0, fu
                 if (options.system) {
                     client.setSystemDb();
                 }
+                if (options.branch) {
+                    client.checkout(options.branch);
+                }
                 if (!options.exportSchema) return [3 /*break*/, 3];
                 _a = consoleDumpJson;
                 return [4 /*yield*/, client.getSchema()];
             case 2:
-                _a.apply(void 0, [_j.sent()]);
-                _j.label = 3;
+                _a.apply(void 0, [_o.sent()]);
+                _o.label = 3;
             case 3:
                 if (options.create) {
                     debug(program.args
@@ -194,8 +201,8 @@ var cli = function () { return (0, tslib_1.__awaiter)(void 0, void 0, void 0, fu
                 _b = consoleDumpJson;
                 return [4 /*yield*/, client.queryDocument(JSON.parse(options.queryDocuments), { as_list: true, graph_type: database })];
             case 4:
-                _b.apply(void 0, [_j.sent()]);
-                _j.label = 5;
+                _b.apply(void 0, [_o.sent()]);
+                _o.label = 5;
             case 5:
                 if (!(typeof options.read === "string")) return [3 /*break*/, 7];
                 if (!options.read)
@@ -203,8 +210,8 @@ var cli = function () { return (0, tslib_1.__awaiter)(void 0, void 0, void 0, fu
                 _c = consoleDumpJson;
                 return [4 /*yield*/, client.getDocument({ id: options.read, graph_type: database })];
             case 6:
-                _c.apply(void 0, [_j.sent()]);
-                _j.label = 7;
+                _c.apply(void 0, [_o.sent()]);
+                _o.label = 7;
             case 7:
                 if (!(typeof options.schemaFrame === "string")) return [3 /*break*/, 9];
                 if (!options.schemaFrame)
@@ -212,8 +219,8 @@ var cli = function () { return (0, tslib_1.__awaiter)(void 0, void 0, void 0, fu
                 _d = consoleDumpJson;
                 return [4 /*yield*/, client.getSchemaFrame(options.schemaFrame)];
             case 8:
-                _d.apply(void 0, [_j.sent()]);
-                _j.label = 9;
+                _d.apply(void 0, [_o.sent()]);
+                _o.label = 9;
             case 9:
                 if (!(typeof options.delete === "string")) return [3 /*break*/, 11];
                 if (!options.delete)
@@ -221,8 +228,8 @@ var cli = function () { return (0, tslib_1.__awaiter)(void 0, void 0, void 0, fu
                 _e = consoleDumpJson;
                 return [4 /*yield*/, client.deleteDocument({ id: [options.delete], graph_type: database })];
             case 10:
-                _e.apply(void 0, [_j.sent()]);
-                _j.label = 11;
+                _e.apply(void 0, [_o.sent()]);
+                _o.label = 11;
             case 11:
                 if (!(typeof options.optimize === "string")) return [3 /*break*/, 13];
                 if (!options.optimize)
@@ -230,8 +237,8 @@ var cli = function () { return (0, tslib_1.__awaiter)(void 0, void 0, void 0, fu
                 _f = consoleDumpJson;
                 return [4 /*yield*/, client.optimizeBranch(options.optimize)];
             case 12:
-                _f.apply(void 0, [_j.sent()]);
-                _j.label = 13;
+                _f.apply(void 0, [_o.sent()]);
+                _o.label = 13;
             case 13:
                 if (!(typeof options.createDatabase === "string")) return [3 /*break*/, 16];
                 createJsonFromFileNameParameter_1 = program.args[0];
@@ -243,7 +250,7 @@ var cli = function () { return (0, tslib_1.__awaiter)(void 0, void 0, void 0, fu
                         .then(function (res) { return res; })
                         .catch(function () { return ({}); })];
             case 14:
-                createJson = _j.sent();
+                createJson = _o.sent();
                 if (createJson.schema === "false") {
                     throw new Error('Error: schema element must be a boolean or undefined, and not "false". If undefined, it defaults to true.');
                 }
@@ -255,8 +262,8 @@ var cli = function () { return (0, tslib_1.__awaiter)(void 0, void 0, void 0, fu
                 _g = consoleDumpJson;
                 return [4 /*yield*/, client.createDatabase(options.createDatabase, databaseCreationOptions)];
             case 15:
-                _g.apply(void 0, [_j.sent()]);
-                _j.label = 16;
+                _g.apply(void 0, [_o.sent()]);
+                _o.label = 16;
             case 16:
                 if (!(typeof options.deleteDatabase === "string")) return [3 /*break*/, 18];
                 if (!options.deleteDatabase)
@@ -264,9 +271,38 @@ var cli = function () { return (0, tslib_1.__awaiter)(void 0, void 0, void 0, fu
                 _h = consoleDumpJson;
                 return [4 /*yield*/, client.deleteDatabase(options.deleteDatabase, connectionObject.organisation)];
             case 17:
-                _h.apply(void 0, [_j.sent()]);
-                _j.label = 18;
-            case 18: return [2 /*return*/];
+                _h.apply(void 0, [_o.sent()]);
+                _o.label = 18;
+            case 18:
+                if (!(typeof options.createBranch === "string")) return [3 /*break*/, 22];
+                createEmptyBranch = program.args[0];
+                if (!(createEmptyBranch === "true")) return [3 /*break*/, 20];
+                _j = consoleDumpJson;
+                return [4 /*yield*/, client.branch(options.createBranch, true)];
+            case 19:
+                _j.apply(void 0, [_o.sent()]);
+                return [3 /*break*/, 22];
+            case 20:
+                _k = consoleDumpJson;
+                return [4 /*yield*/, client.branch(options.createBranch, false)];
+            case 21:
+                _k.apply(void 0, [_o.sent()]);
+                _o.label = 22;
+            case 22:
+                if (!(typeof options.deleteBranch === "string")) return [3 /*break*/, 24];
+                _l = consoleDumpJson;
+                return [4 /*yield*/, client.deleteBranch(options.deleteBranch)];
+            case 23:
+                _l.apply(void 0, [_o.sent()]);
+                _o.label = 24;
+            case 24:
+                if (!options.branches) return [3 /*break*/, 26];
+                _m = consoleDumpJson;
+                return [4 /*yield*/, client.getBranches()];
+            case 25:
+                _m.apply(void 0, [_o.sent()]);
+                _o.label = 26;
+            case 26: return [2 /*return*/];
         }
     });
 }); };

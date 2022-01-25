@@ -12,12 +12,12 @@ When running with docker and docker-compose, use the correct host, and add the d
 
 ```bash
 $ export TUSPARAMS="$(echo '{"url":"http://localhost:6363","key":"password","user":"admin","organisation":"admin","db":"mydb"}' | base64 )"
-$ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --help
-$ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --export-schema
-$ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --query-document '{"type":"Person"}'
-$ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --read Person/johndoe
-$ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --delete Person/johndoe
-$ docker run --rm -it -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --instance schema --read Person
+$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --help
+$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --export-schema
+$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --query-document '{"type":"Person"}'
+$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --read Person/johndoe
+$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --delete Person/johndoe
+$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --instance schema --read Person
 ```
 
 Interact with TerminusDB from the commandline to import/export documents and setup the schema.
@@ -53,7 +53,8 @@ $ sudo npm install -g @hoijnet/tuscli
 ## Examples
 
 ```
-$ node dist/tuscli.js --export-schema
+$ node dist/tuscli.js --createBranch mybranch true
+$ node dist/tuscli.js --branch mybranch --export-schema
 $ node dist/tuscli.js --query-document '{"type":"Person"}'
 $ node dist/tuscli.js --read Person/johndoe
 $ node dist/tuscli.js --delete Person/johndoe
@@ -100,6 +101,10 @@ Options:
   -o, --optimize <main>                         optimize and do delta rollups on a branch
   --createDatabase <database-id> <create-json>  create database/data product, default JSON: {"schema":true, "label":"","comment":""}
   --deleteDatabase <database-id>                delete database/data product
+  --createBranch <branch-id> <true/false>       create branch, true for empty branch
+  --deleteBranch <branch-id>                    delete branch
+  --branches                                    pull list of branched in the data product
+  -b, --branch <branch-id>                      select active branch
   -h, --help                                    display help for command
 ```
 
@@ -122,8 +127,8 @@ This is an independent single-contributor project (so far) done in my free time 
 
 To put into a `Makefile` at some point
 
-```
-$ # Bump version number in package.json
+```bash
+# Bump version number in package.json
 $ npm run buildnexe
 $ npm run dockerize
 $ git push
