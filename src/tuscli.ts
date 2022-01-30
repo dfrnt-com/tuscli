@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import TerminusClient from "@terminusdb/terminusdb-client";
+import { WOQL } from  "@terminusdb/terminusdb-client";
 import { Command } from "commander";
 import colorize from "json-colorizer";
 import Debug from "debug";
@@ -8,7 +9,7 @@ import fs from "fs";
 const program = new Command();
 
 program
-  .version("0.1.0")
+  .version("0.1.1")
   .description("TerminusDB Javascript cli: tuscli [options] <fileName(s)>")
   .option("-c, --create", "create document from provided file")
   .option("-r, --read <document-id>", "read document-id (Type/id)")
@@ -31,6 +32,7 @@ program
   .option("-x, --system", "connect to system database")
   .option("-i, --instance <instance|schema>", "document instance, default is instance")
   .option("-b, --branch <branch-id>", "select active branch")
+  .option("--woql <WOQL>", "Execute JS WOQL query (as an argument)")
   .parse(process.argv);
 
 enum DatabaseSelection {
@@ -260,6 +262,18 @@ export const cli = async () => {
 
   if (options.branches) {
     consoleDumpJson(await client.getBranches());
+  }
+
+  const parseWoql = (woql:string) => {
+    return Function('"use strict";return ( function(WOQL){return (' + woql + ')});')()(WOQL);
+  }
+
+  if (typeof options.woql === "string") {
+    const comment = typeof process.argv[0] === "string" 
+    ? process.argv[0]
+    : "tuscli";
+    const suppliedWoql = parseWoql(options.woql)
+    consoleDumpJson(await client.query(suppliedWoql, comment));
   }
 };
 

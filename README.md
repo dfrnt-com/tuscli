@@ -105,6 +105,7 @@ Options:
   --deleteBranch <branch-id>                    delete branch
   --branches                                    pull list of branched in the data product
   -b, --branch <branch-id>                      select active branch
+  --woql <WOQL>                                 Execute JS WOQL query (as an argument)
   -h, --help                                    display help for command
 ```
 
