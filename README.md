@@ -1,8 +1,12 @@
 # tuscli - Independent TerminusDB Javascript document cli
 
-Interact with TerminusDB from the commandline to import/export documents and setup the schema.
+Interact with TerminusDB and DFRNT from the commandline to import/export documents and setup the schema. 
 
-## Requirements
+This open source tool is built to help changemakers leverage semantic knowledge graphs from the command line. We, [DFRNT](https://dfrnt.se?utm_source=github&utm_content=tuscli), believe in data mesh as a great bearer of structured organisational data. We leverage [TerminusDB](https://terminusdb.com) to build our product on. This tuscli tooling integrates [TerminusDB/TerminusX](https://terminusdb.com) data and complements the [DFRNT](https://dfrnt.se?utm_source=github&utm_content=tuscli) platform. 
+
+Sign up to the [DFRNT waiting list](https://dfrnt.se?utm_source=github&utm_content=tuscli) to receive your invitation to our beta. We have slowly begun the onboarding now during early 2022.
+
+## Requirements unless using a prepackaged form
 
 * [NodeJS](https://nodejs.org/en/)
 
@@ -62,6 +66,8 @@ $ node dist/tuscli.js --instance schema --create "`pwd`/schemaDocument.json"
 $ node run buildnexe
 $ ./tuscli --instance schema --update Person ./person.json
 ```
+
+To import an export, make sure that the coloring is removed from the json, and remove the TerminusDB schema preamble. Then it is possible to import the JSON array of documents with `--instance schema`and `--create` flags. Can be helpful to try in a separate branch as well.  
 
 ## Motivation and Features
 
