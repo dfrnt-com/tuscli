@@ -1,3 +1,6 @@
+v0.1.2-alpha Pre-release
+* Updated TerminusDB client to 10.0.6
+
 v0.0.9-alpha Pre-release
 * Fixed colorized JSON with corrected quotes
 

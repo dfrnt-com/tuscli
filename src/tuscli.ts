@@ -9,7 +9,7 @@ import fs from "fs";
 const program = new Command();
 
 program
-  .version("0.1.1")
+  .version("0.1.2")
   .description("TerminusDB Javascript cli: tuscli [options] <fileName(s)>")
   .option("-c, --create", "create document from provided file")
   .option("-r, --read <document-id>", "read document-id (Type/id)")
@@ -29,6 +29,7 @@ program
   .option("--createBranch <branch-id> <true/false>", "create branch, true for empty branch")
   .option("--deleteBranch <branch-id>", "delete branch")
   .option("--branches", "pull list of branched in the data product")
+  .option("--nocolor", "disable the colorize filter of output")
   .option("-x, --system", "connect to system database")
   .option("-i, --instance <instance|schema>", "document instance, default is instance")
   .option("-b, --branch <branch-id>", "select active branch")
@@ -80,16 +81,19 @@ const getFileJson = (path: string) => {
     process.exit(1);
   }
 };
-const findConnectionConfiguration = (file: string) => {
+
+const findConnectionConfiguration = (file: string, envName: string) => {
+  const envParameters = process.env[envName];
+
   if (file) {
     debug("Provided configuration information from file: " + file);
     return <ITerminusConnectionObject>getFileJson(file);
-  } else if (process.env.TUSPARAMS) {
+  } else if (envParameters) {
     try {
-      debug("Provided configuration infomation from TUSPARAMS: " + btoa(process.env.TUSPARAMS));
-      return <ITerminusConnectionObject>JSON.parse(btoa(process.env.TUSPARAMS ?? ""));
+      debug("Provided configuration infomation from TUSPARAMS: " + btoa(envParameters));
+      return <ITerminusConnectionObject>JSON.parse(btoa(envParameters));
     } catch (e) {
-      console.error("TUSPARAMS environment variable not proper base64 encoded JSON string");
+      console.error(envName + " environment variable not with proper base64 encoded JSON string");
     }
   }
   debug("No provided connection information");
@@ -104,13 +108,18 @@ const exampleConnObject = JSON.stringify({
   db: "mydb",
 });
 
-const connectionObject = findConnectionConfiguration(options.jsonFile);
+const connectionObject = findConnectionConfiguration(options.jsonFile, "TUSPARAMS");
+const remoteObject = findConnectionConfiguration(options.jsonFile, "TUSREMOTE");
 
 debug(exampleConnObject);
 
 const consoleDumpJson = (obj: object) => {
   const json = JSON.stringify(obj, null, 2);
-  console.log(colorize(json, { pretty: true }));
+  if(options.nocolor) {
+    console.log(json);
+  } else {
+    console.log(colorize(json, { pretty: true }));
+  }
 };
 
 if (options.dumpProfile) {
@@ -121,7 +130,7 @@ if (options.dumpProfile) {
   if (dumpInfo.apikey) {
     dumpInfo.apikey = "**** hidden ****";
   }
-  console.warn("To set the environment variable in bash:");
+  console.warn("To set the environment variable in bash, use TUSREMOTE to remote services:");
   console.warn('# export TUSPARAMS="$(echo ' + JSON.stringify(exampleConnObject) + ' |base64)" ');
   console.log("To debug, export DEBUG='*'");
   console.log("");
@@ -130,31 +139,37 @@ if (options.dumpProfile) {
   process.exit(0);
 }
 
+const connectClient = (connInfo: ITerminusConnectionObject): any => {
+  if ("key" in connInfo) {
+    return new TerminusClient.WOQLClient(connInfo.url, {
+      db: connInfo.db,
+      key: connInfo.key,
+      user: connInfo.user,
+      organisation: connInfo.organisation,
+    });
+  } else {
+    return new TerminusClient.WOQLClient(connInfo.url, {
+      user: connInfo.user,
+      organisation: connInfo.organisation,
+    });
+  }
+};
+
 export const cli = async () => {
   debug("Options: ", options);
-  debug("Remaining arguments: ", program.args);
-  const connectClient = (connInfo: ITerminusConnectionObject): any => {
-    if ("key" in connInfo) {
-      return new TerminusClient.WOQLClient(connInfo.url, {
-        db: connInfo.db,
-        key: connInfo.key,
-        user: connInfo.user,
-        organisation: connInfo.organisation,
-      });
-    } else {
-      return new TerminusClient.WOQLClient(connInfo.url, {
-        db: connInfo.db,
-        user: connInfo.user,
-        organisation: connInfo.organisation,
-      });
-    }
-  };
+  debug("Remaining arguments: ", program.args);  
   const client = connectClient(connectionObject);
+
+  // Make local and remote authentication
+  // Convert to new connection object for the TUSPARAMS
+  // client.remoteAuth({"key":"dhfmnmjglkrelgkptohkn","type":"jwt"})
 
   if ("apikey" in connectionObject) {
     client.setApiKey(connectionObject.apikey);
   }
-  await client.connect();
+  client.db(connectionObject.db);
+  client.organization(connectionObject.organisation);
+  // await client.connect();
 
   const selectDatabase = (selectedDatabase: DatabaseSelection) => {
     switch (selectedDatabase) {
