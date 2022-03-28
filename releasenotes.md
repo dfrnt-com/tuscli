@@ -1,3 +1,6 @@
+v0.1.3-alpha Pre-release
+* Updated TerminusDB client to 10.0.7
+
 v0.1.2-alpha Pre-release
 * Updated TerminusDB client to 10.0.6
 
