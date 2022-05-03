@@ -1,4 +1,4 @@
-FROM ubuntu:latest AS build
+FROM ubuntu:focal AS build
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y nodejs python npm git
 

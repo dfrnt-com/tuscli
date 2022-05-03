@@ -1,3 +1,21 @@
+v0.1.9-alpha Pre-release
+* Added ability to select commit, and explore the commit graph
+
+v0.1.8-alpha Pre-release
+* Bumped TerminusDB client to 10.0.10 with improvements to id in WOQL.doc
+
+v0.1.7-alpha Pre-release
+* Added a JS WOQL to JSON WOQL compile function
+
+v0.1.6-alpha Pre-release
+* Added a JS WOQL to JSON WOQL compile function
+
+v0.1.5-alpha Pre-release
+* Removed debug output left by mistake
+
+v0.1.4-alpha Pre-release
+* Refactored WOQL option to serialize/deserialize WOQL
+
 v0.1.3-alpha Pre-release
 * Updated TerminusDB client to 10.0.7
 

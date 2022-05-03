@@ -1,8 +1,7 @@
 TUSCLI_VERSION := $(shell sed -n -e '/^  "version": "/ {s/"[ ,]*$$//;s/^.*"//p;}' package.json)
 
 .PHONY: default
-default:
-	@echo "no default"
+default: build
 
 .PHONY: release
 release: build release-docker release-npm
@@ -20,11 +19,11 @@ build:
 	npm audit --production
 	npm run build
 	docker build --pull -t tuscli -f docker/Dockerfile .
+	docker tag tuscli hoijnet/tuscli:$(TUSCLI_VERSION)
+	docker tag tuscli hoijnet/tuscli:latest
 
 .PHONY: release-docker
 release-docker:
-	docker tag tuscli hoijnet/tuscli:$(TUSCLI_VERSION)
-	docker tag tuscli hoijnet/tuscli:latest
 	docker push hoijnet/tuscli:$(TUSCLI_VERSION)
 	docker push hoijnet/tuscli:latest
 

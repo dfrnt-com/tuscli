@@ -1,6 +1,6 @@
 {
   "name": "@hoijnet/tuscli",
-  "version": "0.1.3",
+  "version": "0.1.8",
   "description": "TerminusDB Javascript CLI",
   "main": "dist/tuscli.js",
   "bin": {
@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/hoijnet/tuscli#readme",
   "dependencies": {
-    "@terminusdb/terminusdb-client": "^10.0.7",
+    "@terminusdb/terminusdb-client": "^10.0.10",
     "commander": "^8.3.0",
     "debug": "^4.3.3",
     "json-colorizer": "^2.2.2",

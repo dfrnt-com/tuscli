@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-import TerminusClient from "@terminusdb/terminusdb-client";
-import { WOQL } from  "@terminusdb/terminusdb-client";
+import TerminusClient, { WOQL } from "@terminusdb/terminusdb-client";
 import { Command } from "commander";
 import colorize from "json-colorizer";
 import Debug from "debug";
@@ -9,7 +8,7 @@ import fs from "fs";
 const program = new Command();
 
 program
-  .version("0.1.2")
+  .version("0.1.9")
   .description("TerminusDB Javascript cli: tuscli [options] <fileName(s)>")
   .option("-c, --create", "create document from provided file")
   .option("-r, --read <document-id>", "read document-id (Type/id)")
@@ -28,12 +27,15 @@ program
   .option("--deleteDatabase <database-id>", "delete database/data product")
   .option("--createBranch <branch-id> <true/false>", "create branch, true for empty branch")
   .option("--deleteBranch <branch-id>", "delete branch")
-  .option("--branches", "pull list of branched in the data product")
+  .option("--branches", "pull list of branches in the data product")
   .option("--nocolor", "disable the colorize filter of output")
   .option("-x, --system", "connect to system database")
+  .option("-y, --commitGraph <count>", "get the 10 last commits, supply an argument for more")
   .option("-i, --instance <instance|schema>", "document instance, default is instance")
-  .option("-b, --branch <branch-id>", "select active branch")
+  .option("-b, --branch <branch-id>", "use/select active branch")
+  .option("-t, --commit <commit-id>", "use/select specific commit")
   .option("--woql <WOQL>", "Execute JS WOQL query (as an argument)")
+  .option("--compileWoql <WOQL>", "Compile JS WOQL (as an argument) into JSON WOQL")
   .parse(process.argv);
 
 enum DatabaseSelection {
@@ -115,7 +117,7 @@ debug(exampleConnObject);
 
 const consoleDumpJson = (obj: object) => {
   const json = JSON.stringify(obj, null, 2);
-  if(options.nocolor) {
+  if (options.nocolor) {
     console.log(json);
   } else {
     console.log(colorize(json, { pretty: true }));
@@ -157,19 +159,18 @@ const connectClient = (connInfo: ITerminusConnectionObject): any => {
 
 export const cli = async () => {
   debug("Options: ", options);
-  debug("Remaining arguments: ", program.args);  
+  debug("Remaining arguments: ", program.args);
   const client = connectClient(connectionObject);
 
   // Make local and remote authentication
   // Convert to new connection object for the TUSPARAMS
-  // client.remoteAuth({"key":"dhfmnmjglkrelgkptohkn","type":"jwt"})
+  // client.remoteAuth({"key":"randomkey","type":"jwt"})
 
   if ("apikey" in connectionObject) {
     client.setApiKey(connectionObject.apikey);
   }
   client.db(connectionObject.db);
   client.organization(connectionObject.organisation);
-  // await client.connect();
 
   const selectDatabase = (selectedDatabase: DatabaseSelection) => {
     switch (selectedDatabase) {
@@ -189,6 +190,23 @@ export const cli = async () => {
 
   if (options.branch) {
     client.checkout(options.branch);
+  }
+
+  if (options.commit) {
+    client.ref(options.commit);
+  }
+
+  if (options.commitGraph) {
+    const defaultLength = 10;
+    const commitBindings = (
+      await client.query(
+        WOQL.lib().commits(
+          options.branch ?? undefined,
+          typeof options.commitGraph === "string" ? options.commitGraph : defaultLength
+        )
+      )
+    ).bindings;
+    consoleDumpJson(commitBindings);
   }
 
   if (options.exportSchema) {
@@ -279,16 +297,23 @@ export const cli = async () => {
     consoleDumpJson(await client.getBranches());
   }
 
-  const parseWoql = (woql:string) => {
-    return Function('"use strict";return ( function(WOQL){return (' + woql + ')});')()(WOQL);
-  }
+  
+  const parseWoql = (woql: string) => {
+    const normalizeWoql = (str: string): string => str.replace(/\\n/g, " ");
+    return Function('"use strict";return ( function(WOQL){return (' + normalizeWoql(woql) + ").json()});")()(WOQL);
+  };
 
   if (typeof options.woql === "string") {
-    const comment = typeof process.argv[0] === "string" 
-    ? process.argv[0]
-    : "tuscli";
-    const suppliedWoql = parseWoql(options.woql)
+    const comment = typeof process.argv[0] === "string" ? process.argv[0] : "tuscli";
+    const parsedWoql = parseWoql(options.woql);
+    const suppliedWoql = WOQL.json(parsedWoql);
     consoleDumpJson(await client.query(suppliedWoql, comment));
+  }
+
+  if (typeof options.compileWoql === "string") {
+    const parsedWoql = parseWoql(options.compileWoql);
+    const suppliedWoql = WOQL.json(parsedWoql);
+    consoleDumpJson(suppliedWoql);
   }
 };
 

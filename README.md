@@ -67,7 +67,9 @@ $ node run buildnexe
 $ ./tuscli --instance schema --update Person ./person.json
 ```
 
-To import an export, make sure that the coloring is removed from the json, and remove the TerminusDB schema preamble. Then it is possible to import the JSON array of documents with `--instance schema`and `--create` flags. Can be helpful to try in a separate branch as well.  
+To import and export, make sure that the coloring is removed from the json, and remove the TerminusDB schema preamble. Then it is possible to import the JSON array of documents with `--instance schema`and `--create` flags. Can be helpful to try in a separate branch as well.  
+
+Additional examples can be found in the examples folder, including an example of CSV document import using WOQL.
 
 ## Motivation and Features
 
