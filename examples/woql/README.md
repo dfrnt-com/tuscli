@@ -1,5 +1,7 @@
 # Example import using the woql interface
 
+With the new woql functionality, WOQL can be run from the commandline, including CSV imports using WOQL like below.
+
 ```
 npm start -- --woql '
 WOQL.and(
