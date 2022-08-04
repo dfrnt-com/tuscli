@@ -1,4 +1,7 @@
-v2.0.0-alpha Pre-release
+v0.2.1-alpha Pre-release
+* Incorrectly published as previous version as 2.0.0, now corrected with v0.2.1 extra release.
+
+v0.2.0-alpha Pre-release
 * Reduced output with quiet flag
 * Switched from nexe to pkg to produce tuscli binary for Linux due to security vulnerability in nexe 
 * Reduced docker image to scratch, with self-contained statically linked tuscli binary

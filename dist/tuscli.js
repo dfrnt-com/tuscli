@@ -10,7 +10,7 @@ var debug_1 = tslib_1.__importDefault(require("debug"));
 var fs_1 = tslib_1.__importDefault(require("fs"));
 var program = new commander_1.Command();
 program
-    .version("2.0.0")
+    .version("0.2.1")
     .description("TerminusDB Javascript cli: tuscli [options] <fileName(s)>")
     .option("-c, --create", "create document from provided file")
     .option("-r, --read <document-id>", "read document-id (Type/id)")
