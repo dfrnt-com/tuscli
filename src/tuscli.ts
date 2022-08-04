@@ -8,7 +8,7 @@ import fs from "fs";
 const program = new Command();
 
 program
-  .version("0.1.9")
+  .version("2.0.0")
   .description("TerminusDB Javascript cli: tuscli [options] <fileName(s)>")
   .option("-c, --create", "create document from provided file")
   .option("-r, --read <document-id>", "read document-id (Type/id)")
@@ -29,6 +29,7 @@ program
   .option("--deleteBranch <branch-id>", "delete branch")
   .option("--branches", "pull list of branches in the data product")
   .option("--nocolor", "disable the colorize filter of output")
+  .option("--quiet", "disable diagnostic outputs")
   .option("-x, --system", "connect to system database")
   .option("-y, --commitGraph <count>", "get the 10 last commits, supply an argument for more")
   .option("-i, --instance <instance|schema>", "document instance, default is instance")
@@ -38,7 +39,7 @@ program
   .option("--compileWoql <WOQL>", "Compile JS WOQL (as an argument) into JSON WOQL")
   .parse(process.argv);
 
-enum DatabaseSelection {
+enum GraphSelection {
   SCHEMA = "schema",
   INSTANCE = "instance",
 }
@@ -49,9 +50,11 @@ enum RepoType {
 
 const options = program.opts();
 const debug = Debug("Zebra CLI");
+
 if (Object.keys(options).length === 0) {
   program.help();
 }
+let showOutput = true;
 
 interface ITerminusConnectionObject {
   url: string;
@@ -172,18 +175,26 @@ export const cli = async () => {
   client.db(connectionObject.db);
   client.organization(connectionObject.organisation);
 
-  const selectDatabase = (selectedDatabase: DatabaseSelection) => {
-    switch (selectedDatabase) {
+  const selectGraph = (selectedGraph: GraphSelection) => {
+    switch (selectedGraph) {
       case "schema":
-        return selectedDatabase;
+        return selectedGraph;
       case "instance":
-        return selectedDatabase;
+        return selectedGraph;
       default:
-        return DatabaseSelection.INSTANCE;
+        if(typeof selectedGraph === "string") {
+          return selectedGraph;
+        } else {
+          return GraphSelection.INSTANCE;
+        }
     }
   };
 
-  let database: DatabaseSelection = selectDatabase(options.instance);
+  let database: GraphSelection = selectGraph(options.instance);
+  if (options.quiet) {
+    showOutput = false;
+  }
+
   if (options.system) {
     client.setSystemDb();
   }
@@ -272,25 +283,30 @@ export const cli = async () => {
       label: typeof createJson.label === "string" ? createJson.label : "",
       comment: typeof createJson.comment === "string" ? createJson.comment : "",
     };
-    consoleDumpJson(await client.createDatabase(options.createDatabase, databaseCreationOptions));
+    const result = await client.createDatabase(options.createDatabase, databaseCreationOptions)
+    showOutput && consoleDumpJson(result);
   }
 
   if (typeof options.deleteDatabase === "string") {
     if (!options.deleteDatabase) throw new Error("Database name to delete/kill was not provided");
-    consoleDumpJson(await client.deleteDatabase(options.deleteDatabase, connectionObject.organisation));
+    const result = await client.deleteDatabase(options.deleteDatabase, connectionObject.organisation)
+    showOutput && consoleDumpJson(result);
   }
 
   if (typeof options.createBranch === "string") {
     const createEmptyBranch = program.args[0];
     if (createEmptyBranch === "true") {
-      consoleDumpJson(await client.branch(options.createBranch, true));
+      const result = await client.branch(options.createBranch, true)
+      showOutput && consoleDumpJson(result)
     } else {
-      consoleDumpJson(await client.branch(options.createBranch, false));
+      const result = await client.branch(options.createBranch, false);
+      showOutput && consoleDumpJson(result)
     }
   }
 
   if (typeof options.deleteBranch === "string") {
-    consoleDumpJson(await client.deleteBranch(options.deleteBranch));
+    const result = await client.deleteBranch(options.deleteBranch);
+    showOutput && consoleDumpJson(result)
   }
 
   if (options.branches) {
@@ -307,9 +323,10 @@ export const cli = async () => {
     const comment = typeof process.argv[0] === "string" ? process.argv[0] : "tuscli";
     const parsedWoql = parseWoql(options.woql);
     const suppliedWoql = WOQL.json(parsedWoql);
-    consoleDumpJson(await client.query(suppliedWoql, comment));
+    const result = await client.query(suppliedWoql, comment);
+    showOutput && consoleDumpJson(result);
   }
-
+  
   if (typeof options.compileWoql === "string") {
     const parsedWoql = parseWoql(options.compileWoql);
     const suppliedWoql = WOQL.json(parsedWoql);

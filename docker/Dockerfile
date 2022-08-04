@@ -1,6 +1,4 @@
-FROM ubuntu:focal AS build
-
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y nodejs python npm git
+FROM node AS build
 
 RUN mkdir -p /build
 COPY src /build/src
@@ -13,15 +11,12 @@ WORKDIR /build
 
 RUN rm package-lock.json
 RUN npm install
-RUN npm run buildnexe-docker
+RUN npx npm run buildexe
+RUN chmod 755 /build/bin/tuscli
 
-FROM ubuntu:latest
-COPY --from=build /build/tuscli /bin/tuscli
-RUN chmod 755 /bin/tuscli
-RUN useradd user
-
-# Drop root
-USER user
+FROM scratch
+COPY --from=build /build/bin/tuscli /bin/tuscli
+USER 998
 
 ENTRYPOINT ["/bin/tuscli"]
 CMD ["--help"]

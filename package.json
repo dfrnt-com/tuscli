@@ -1,6 +1,6 @@
 {
   "name": "@hoijnet/tuscli",
-  "version": "0.1.9",
+  "version": "2.0.0",
   "description": "TerminusDB Javascript CLI",
   "main": "dist/tuscli.js",
   "bin": {
@@ -9,8 +9,7 @@
   "scripts": {
     "start": "node dist/tuscli.js",
     "build": "npx tsc --noEmit false --module commonjs",
-    "buildnexe": "npx tsc --noEmit false --module commonjs && npx nexe --build -o tuscli",
-    "buildnexe-docker": "npx tsc --noEmit false --module commonjs && npx nexe -o tuscli",
+    "buildexe": "npx tsc --noEmit false --module commonjs && mkdir -p bin && npx pkg -t node14-linuxstatic-x64 dist/tuscli.js -o bin/tuscli",
     "dockerize": "docker build --pull -t hoijnet/tuscli -f docker/Dockerfile .",
     "dockerpush": "docker push hoijnet/tuscli",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -35,7 +34,7 @@
   "devDependencies": {
     "@types/debug": "^4.1.7",
     "@types/node": "^16.11.21",
-    "nexe": "^4.0.0-beta.19",
+    "pkg": "^5.8.0",
     "typescript": "^4.5.5"
   }
 }
