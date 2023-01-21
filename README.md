@@ -1,5 +1,7 @@
 # tuscli - Independent TerminusDB Javascript document cli
 
+Note: Tuscli was previously `hoijnet/tuscli` and [DFRNT](https://dfrnt.com) assumed maintainership for it since 2023-01-21.
+
 Interact with TerminusDB and DFRNT from the commandline to import/export documents and setup the schema. 
 
 This open source tool is built to help changemakers leverage semantic knowledge graphs from the command line. We, [DFRNT](https://dfrnt.se?utm_source=github&utm_content=tuscli), believe in data mesh as a great bearer of structured organisational data. We leverage [TerminusDB](https://terminusdb.com) to build our product on. This tuscli tooling integrates [TerminusDB/TerminusX](https://terminusdb.com) data and complements the [DFRNT](https://dfrnt.se?utm_source=github&utm_content=tuscli) platform. 
