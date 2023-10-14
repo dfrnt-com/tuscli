@@ -1,3 +1,13 @@
+v0.2.3-alpha Pre-release
+* Added running WOQL from a file
+* Added compilation of WOQL to JSON from a file
+* Added createFromJson so multiple documents can be specified to be created on the command line
+* Added instructions to add user/author to config file
+
+v0.2.2-alpha Pre-release
+* Added support for switching dataproduct by parameter
+* Changed default in example to apikey
+
 v0.2.1-alpha Pre-release
 * Incorrectly published as previous version as 2.0.0, now corrected with v0.2.1 extra release.
 

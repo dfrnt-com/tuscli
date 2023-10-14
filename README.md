@@ -96,27 +96,41 @@ Usage: tuscli [options]
 TerminusDB Javascript cli: tuscli [options] <fileName(s)>
 
 Options:
-  -V, --version                                 output the version number
-  -c, --create                                  create document from provided file
-  -r, --read <document-id>                      read document-id (Type/id)
-  -s, --schemaFrame <document-id>               get the schema frame for a type/subdoctype/enum
-  -u, --update <document-id>                    update document
-  -d, --delete <document-id>                    delete document
-  -q, --query-documents <query-template-json>   list documents of type, example: {"type":"Person"}
-  -e, --export-schema                           export/show instance schema JSON
-  -p, --profile <json-file>                     JSON-formatted connection profile, or set env TUSPARAMS in base64 encoding
-  -z, --dump-profile                            show the default or current connection profile, and how to set it
-  -i, --instance <instance|schema>              specify instance or schema graph, default is instance
-  -x, --system                                  connect to system database
-  -o, --optimize <main>                         optimize and do delta rollups on a branch
-  --createDatabase <database-id> <create-json>  create database/data product, default JSON: {"schema":true, "label":"","comment":""}
-  --deleteDatabase <database-id>                delete database/data product
-  --createBranch <branch-id> <true/false>       create branch, true for empty branch
-  --deleteBranch <branch-id>                    delete branch
-  --branches                                    pull list of branched in the data product
-  -b, --branch <branch-id>                      select active branch
-  --woql <WOQL>                                 Execute JS WOQL query (as an argument)
-  -h, --help                                    display help for command
+  -V, --version                                    output the version number
+  -c, --create                                     create document from provided file
+  --createFromJson                                 create document from supplied JSON, like '{"@id":"Entity/1",
+                                                   "@type":"Entity"}'
+  -r, --read <document-id>                         read document-id (Type/id)
+  -s, --schemaFrame <document-id>                  get the schema frame for a type/subdoctype/enum
+  -u, --update <document-id>                       update document
+  -d, --delete <document-id>                       delete document
+  -q, --query-documents <query-template-json>      list documents of type, example: {"type":"Person"}
+  -e, --export-schema                              export/show instance schema JSON
+  -p, --profile <json-file>                        JSON-formatted connection profile, or set env TUSPARAMS in base64
+                                                   encoding
+  -z, --dump-profile                               show the default or current connection profile, and how to set it
+  -o, --optimize <main>                            optimize and do delta rollups on a branch
+  --createDatabase <dataproduct-id> <create-json>  create data product, default JSON: {"schema":true, "label": "",
+                                                   "comment":""}
+  --deleteDatabase <dataproduct-id>                delete database/data product
+  --deleteDocumentsOfType <type>                   delete all documents of a type
+  --deleteDocumentsIsaType <type>                  delete documents that are is-a type
+  --dataProduct <dataproduct-id>                   override dataproduct to use
+  --createBranch <branch-id> <true/false>          create branch, true for empty branch
+  --deleteBranch <branch-id>                       delete branch
+  --branches                                       pull list of branches in the data product
+  --nocolor                                        disable the colorize filter of output
+  --quiet                                          disable diagnostic outputs
+  -x, --system                                     connect to system database
+  -y, --commitGraph <count>                        get the 10 last commits, supply an argument for more
+  -i, --instance <instance|schema>                 document instance, default is instance
+  -b, --branch <branch-id>                         use/select active branch
+  -t, --commit <commit-id>                         use/select specific commit
+  --woql <WOQL>                                    Execute JS WOQL query (as an argument)
+  --compileWoql <WOQL>                             Compile JS WOQL (as an argument) into JSON WOQL
+  --woqlFile <example.woql.js>                     Execute JS WOQL (from a file)
+  --woqlCompile <example.woql.js>                  Compile JS WOQL into JSON WOQL (from a file)
+  -h, --help                                       display help for command
 ```
 
 ## Contributing
@@ -145,6 +159,12 @@ $ npm run dockerize
 $ git push
 $ npm push
 $ docker push hoijnet/tuscli
+```
+
+## How to build a self-contained command line binary with bun
+
+```sh
+bun build ./src/tuscli.ts --compile --outfile tuscli
 ```
 
 ## Dependencies and mentions
