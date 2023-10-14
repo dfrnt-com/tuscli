@@ -1,30 +1,18 @@
 # tuscli - Independent TerminusDB Javascript document cli
 
-Note: Tuscli was previously `hoijnet/tuscli` and [DFRNT](https://dfrnt.com) assumed maintainership for it since 2023-01-21.
+Note: Tuscli was previously `hoijnet/tuscli`. [DFRNT](https://dfrnt.com) assumed maintainership 2023-01-21.
 
-Interact with TerminusDB and DFRNT from the commandline to import/export documents and setup the schema. 
+Interact with TerminusDB and DFRNT from the commandline to import/export documents and setup your schema. 
 
-This open source tool is built to help changemakers leverage semantic knowledge graphs from the command line. We, [DFRNT](https://dfrnt.se?utm_source=github&utm_content=tuscli), believe in data mesh as a great bearer of structured organisational data. We leverage [TerminusDB](https://terminusdb.com) to build our product on. This tuscli tooling integrates [TerminusDB/TerminusX](https://terminusdb.com) data and complements the [DFRNT](https://dfrnt.se?utm_source=github&utm_content=tuscli) platform. 
+This open source tool is built to work with portable graph data products from the command line. We, [DFRNT](https://dfrnt.se?utm_source=github&utm_content=tuscli), believe that the JSON-LD document and triples knowledge encoding, is a great bearer of structured data for organisations and initiatives. DFRNT is built upon the [TerminusDB](https://terminusdb.com) engine, and this is a client for it. This tuscli tooling integrates [TerminusDB](https://terminusdb.com) data and complements the [DFRNT](https://dfrnt.se?utm_source=github&utm_content=tuscli) platform. 
 
-Sign up to the [DFRNT waiting list](https://dfrnt.se?utm_source=github&utm_content=tuscli) to receive your invitation to our beta. We have slowly begun the onboarding now during early 2022.
+Check out [DFRNT](https://dfrnt.com?utm_source=github&utm_content=tuscli) to try our graph data product platform.
 
 ## Requirements unless using a prepackaged form
 
 * [NodeJS](https://nodejs.org/en/)
 
 ## Usage
-
-When running with docker and docker-compose, use the correct host, and add the docker network to connect run the command with.
-
-```bash
-$ export TUSPARAMS="$(echo '{"url":"http://localhost:6363","key":"password","user":"admin","organisation":"admin","db":"mydb"}' | base64 )"
-$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --help
-$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --export-schema
-$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --query-document '{"type":"Person"}'
-$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --read Person/johndoe
-$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --delete Person/johndoe
-$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --instance schema --read Person
-```
 
 Interact with TerminusDB from the commandline to import/export documents and setup the schema.
 
@@ -55,6 +43,19 @@ Install tuscli globally on your system
 ```bash
 $ sudo npm install -g @hoijnet/tuscli
 ```
+
+When running with docker and docker-compose, use the correct host, and add the docker network to connect run the command with.
+
+```bash
+$ export TUSPARAMS="$(echo '{"url":"http://localhost:6363","key":"password","user":"admin","organisation":"admin","db":"mydb"}' | base64 )"
+$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --help
+$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --export-schema
+$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --query-document '{"type":"Person"}'
+$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --read Person/johndoe
+$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --delete Person/johndoe
+$ docker run --rm -it --network terminusdb_default -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --instance schema --read Person
+```
+
 
 ## Examples
 
