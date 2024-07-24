@@ -7,7 +7,7 @@ const TerminusClient = require("@terminusdb/terminusdb-client");
 // TODO: Change teamname
 const client = new TerminusClient.WOQLClient(
   "http://localhost:6363",
-    { user: "admin", key: "changeme", organization: "admin", db: "GettingStartedDB"}
+    { user: "admin", key: "root", organization: "admin", db: "GettingStartedDB"}
 );
 
 //Assign your key to environment variable TERMINUSDB_ACCESS_TOKEN
@@ -16,13 +16,13 @@ const client = new TerminusClient.WOQLClient(
 const runQuery = async () => {
     const WOQL = TerminusClient.WOQL;
 
-    await client.deleteDatabase("GettingStartedDB");
+//    await client.deleteDatabase("GettingStartedDB");
 
-    await client.createDatabase("GettingStartedDB", {
-        label: "GettingStartedDB",
-        comment: "Created new GettingStartedDB",
-    });
-    console.log("Database created successfully!");
+//    await client.createDatabase("GettingStartedDB", {
+//        label: "GettingStartedDB",
+//        comment: "Created new GettingStartedDB",
+//    });
+//    console.log("Database created successfully!");
 
     client.db("GettingStartedDB");
 
@@ -34,7 +34,7 @@ const runQuery = async () => {
                     .as('Manager', 'v:Manager')
                     .as('Title', 'v:Title')
             ).post("Employees.csv"),
-            WOQL.triple('v:Name','v:any2',"v:any3")
+            //WOQL.triple('v:Name','v:any2',"v:any3")
         )
     )
     console.log(result.bindings);

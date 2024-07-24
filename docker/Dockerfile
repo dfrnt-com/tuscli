@@ -10,7 +10,7 @@ COPY tsconfig.json /build/
 WORKDIR /build
 
 RUN rm package-lock.json
-RUN npm install
+RUN npx bun install
 RUN npx npm run buildexe
 RUN chmod 755 /build/bin/tuscli
 

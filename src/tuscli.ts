@@ -6,9 +6,10 @@ import Debug from "debug";
 import fs from "fs";
 
 const program = new Command();
+const collect = (value: string, previous: Array<string>) => previous.concat([value]);
 
 program
-  .version("0.2.3")
+  .version("0.2.4")
   .description("TerminusDB Javascript cli: tuscli [options] <fileName(s)>")
   .option("-c, --create", "create document from provided file")
   .option("--createFromJson", "create document from supplied JSON, like '{\"@id\":\"Entity/1\", \"@type\":\"Entity\"}'")
@@ -41,6 +42,7 @@ program
   .option("-t, --commit <commit-id>", "use/select specific commit")
   .option("--woql <WOQL>", "Execute JS WOQL query (as an argument)")
   .option("--compileWoql <WOQL>", "Compile JS WOQL (as an argument) into JSON WOQL")
+  .option("--woqlResource <file>", "named file resource(s) to attach to WOQL query (such as csv)", collect, [])
   .option("--woqlFile <example.woql.js>", "Execute JS WOQL (from a file)")
   .option("--woqlCompile <example.woql.js>", "Compile JS WOQL into JSON WOQL (from a file)")
   .parse(process.argv);
@@ -84,7 +86,7 @@ const getFileJson = (path: string) => {
       throw new Error("File does not exist");
     }
     try {
-      return JSON.parse(fs.readFileSync(fileAtPath, {encoding: "utf-8"}).toString());
+      return JSON.parse(fs.readFileSync(fileAtPath, { encoding: "utf-8" }).toString());
     } catch (e) {
       throw new Error("Could not parse the file correctly, likely bad JSON");
     }
@@ -168,6 +170,12 @@ const connectClient = (connInfo: ITerminusConnectionObject): any => {
   }
 };
 
+interface WoqlResource {
+  filename: string;
+  data: string|Blob|fs.ReadStream;
+}
+const namedResourceData: Array<WoqlResource> = [];
+
 export const cli = async () => {
   debug("Options: ", options);
   debug("Remaining arguments: ", program.args);
@@ -180,12 +188,12 @@ export const cli = async () => {
   if ("apikey" in connectionObject) {
     client.setApiKey(connectionObject.apikey);
   } else if ("jwt" in connectionObject) {
-    client.localAuth({"key":connectionObject.jwt,"type":"jwt"})
+    client.localAuth({ "key": connectionObject.jwt, "type": "jwt" })
   }
   client.organization(connectionObject.organisation);
   client.db(connectionObject.db);
 
-  if(options.dataProduct) {
+  if (options.dataProduct) {
     client.db(options.dataProduct)
   }
 
@@ -196,7 +204,7 @@ export const cli = async () => {
       case "instance":
         return selectedGraph;
       default:
-        if(typeof selectedGraph === "string") {
+        if (typeof selectedGraph === "string") {
           return selectedGraph;
         } else {
           return GraphSelection.INSTANCE;
@@ -215,6 +223,16 @@ export const cli = async () => {
 
   if (options.branch) {
     client.checkout(options.branch);
+  }
+
+  if (options.woqlResource) {
+    for (const filename of options.woqlResource) {
+      if(typeof filename !== "string") { continue; }
+      namedResourceData.push({
+        filename,
+        data: fs.createReadStream(filename)
+      })
+    }
   }
 
   if (options.commit) {
@@ -247,7 +265,7 @@ export const cli = async () => {
         })
     );
   }
-  
+
   if (options.createFromJson) {
     debug(
       program.args
@@ -336,7 +354,7 @@ export const cli = async () => {
     consoleDumpJson(await client.getBranches());
   }
 
-  
+
   const parseWoql = (woql: string) => {
     const normalizeWoql = (str: string): string => str.replace(/\\n/g, " ");
     return Function('"use strict";return ( function(WOQL, vars){return (' + normalizeWoql(woql) + ").json()});")()(WOQL);
@@ -345,7 +363,7 @@ export const cli = async () => {
   if (typeof options.deleteDocumentsOfType === "string") {
     const comment = typeof process.argv[0] === "string" ? process.argv[0] : "tuscli";
     const parsedWoql = WOQL.and(
-      WOQL.triple("v:DocumentId","rdf:type","@schema:" + options.deleteDocumentsOfType),
+      WOQL.triple("v:DocumentId", "rdf:type", "@schema:" + options.deleteDocumentsOfType),
       WOQL.delete_document("v:DocumentId")
     );
     const result = await client.query(parsedWoql, comment);
@@ -355,7 +373,7 @@ export const cli = async () => {
   if (typeof options.deleteDocumentsIsaType === "string") {
     const comment = typeof process.argv[0] === "string" ? process.argv[0] : "tuscli";
     const parsedWoql = WOQL.and(
-      WOQL.isa("v:DocumentId",options.deleteDocumentsIsaType),
+      WOQL.isa("v:DocumentId", options.deleteDocumentsIsaType),
       WOQL.delete_document("v:DocumentId")
     );
     const result = await client.query(parsedWoql, comment);
@@ -366,7 +384,9 @@ export const cli = async () => {
     const comment = typeof process.argv[0] === "string" ? process.argv[0] : "tuscli";
     const parsedWoql = parseWoql(options.woql);
     const suppliedWoql = WOQL.json(parsedWoql);
-    const result = await client.query(suppliedWoql, comment);
+    const result = await client.query(suppliedWoql, comment, false, {
+      namedResourceData
+    });
     showOutput && consoleDumpJson(result);
   }
 
@@ -376,10 +396,12 @@ export const cli = async () => {
     const woql = fs.readFileSync(options.woqlFile, "utf8");
     const parsedWoql = parseWoql(woql);
     const suppliedWoql = WOQL.json(parsedWoql);
-    const result = await client.query(suppliedWoql, {comment, author: "bun"});
+    const result = await client.query(suppliedWoql, { comment, author: "tuscli" }, false, {
+      namedResourceData
+    });
     showOutput && consoleDumpJson(result);
   }
-  
+
   if (typeof options.woqlCompile === "string") {
     const woql = fs.readFileSync(options.woqlCompile, "utf8");
     const parsedWoql = parseWoql(woql);

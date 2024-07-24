@@ -8,9 +8,9 @@
   },
   "scripts": {
     "start": "node dist/tuscli.js",
-    "build": "npx tsc --noEmit false --module commonjs",
-    "buildexe": "npx tsc --noEmit false --module commonjs && mkdir -p bin && npx pkg -t node14-linuxstatic-x64 dist/tuscli.js -o bin/tuscli",
-    "buildmac": "npx tsc --noEmit false --module commonjs && mkdir -p bin && npx pkg dist/tuscli.js -o bin/tuscli-mac",
+    "build": "npx tsc --noEmit false --module commonjs --outDir dist",
+    "buildexe": "npx tsc --noEmit false --module commonjs --outDir dist && mkdir -p bin && npx @vercel/ncc build dist/tuscli.js && npx pkg -t node18-linuxstatic-x64 dist/index.js -o bin/tuscli",
+    "buildmac": "npx tsc --noEmit false --module commonjs --outDir dist && mkdir -p bin && npx pkg dist/tuscli.js -o bin/tuscli-mac",
     "dockerize": "docker build --pull -t hoijnet/tuscli -f docker/Dockerfile .",
     "dockerpush": "docker push hoijnet/tuscli",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -35,6 +35,7 @@
   "devDependencies": {
     "@types/debug": "^4.1.7",
     "@types/node": "^16.11.21",
+    "@vercel/ncc": "^0.38.1",
     "pkg": "^5.8.0",
     "typescript": "^4.5.5"
   }
