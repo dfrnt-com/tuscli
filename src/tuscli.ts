@@ -1,15 +1,46 @@
 #!/usr/bin/env node
-import TerminusClient, { WOQL } from "terminusdb";
 import { Command } from "commander";
 import colorize from "json-colorizer";
 import Debug from "debug";
 import fs from "node:fs";
+import {
+  findConnectionConfiguration,
+  connectClient,
+  configureClient,
+  selectGraph,
+  exampleConnObject,
+} from "./connection";
+import {
+  WoqlResource,
+  dumpProfile,
+  getCommitGraph,
+  exportSchema,
+  getSchemaFrame,
+  createDocument,
+  createDocumentFromJson,
+  updateDocument,
+  queryDocuments,
+  readDocument,
+  deleteDocument,
+  deleteDocumentsOfType,
+  deleteDocumentsIsaType,
+  optimizeBranch,
+  createDatabase,
+  deleteDatabase,
+  createBranch,
+  deleteBranch,
+  getBranches,
+  executeWoql,
+  executeWoqlFile,
+  compileWoql,
+  compileWoqlFile,
+} from "./commands";
 
 const program = new Command();
 const collect = (value: string, previous: Array<string>) => previous.concat([value]);
 
 program
-  .version("0.2.4")
+  .version("0.2.5")
   .description("TerminusDB Javascript cli: tuscli [options] <fileName(s)>")
   .option("-c, --create", "create document from provided file")
   .option("--createFromJson", "create document from supplied JSON, like '{\"@id\":\"Entity/1\", \"@type\":\"Entity\"}'")
@@ -47,15 +78,6 @@ program
   .option("--woqlCompile <example.woql.js>", "Compile JS WOQL into JSON WOQL (from a file)")
   .parse(process.argv);
 
-enum GraphSelection {
-  SCHEMA = "schema",
-  INSTANCE = "instance",
-}
-enum RepoType {
-  local = "local",
-  remote = "remote",
-}
-
 const options = program.opts();
 const debug = Debug("Zebra CLI");
 
@@ -64,67 +86,7 @@ if (Object.keys(options).length === 0) {
 }
 let showOutput = true;
 
-interface ITerminusConnectionObject {
-  url: string;
-  key?: string;
-  apikey?: string;
-  jwt?: string;
-  user?: string;
-  organisation: string;
-  db: string;
-  repo?: RepoType | string;
-  branch?: string;
-  ref?: string;
-  default_branch_id?: string;
-}
-
-const btoa = (b: string) => Buffer.from(b, "base64").toString("binary");
-const getFileJson = (path: string) => {
-  try {
-    const fileAtPath = path === "-" ? "/dev/stdin" : path;
-    if (!fs.existsSync(fileAtPath)) {
-      throw new Error("File does not exist");
-    }
-    try {
-      return JSON.parse(fs.readFileSync(fileAtPath, { encoding: "utf-8" }).toString());
-    } catch (e) {
-      throw new Error("Could not parse the file correctly, likely bad JSON");
-    }
-  } catch (e) {
-    console.error("Could handle input file correctly: ", path);
-    console.log(e);
-    process.exit(1);
-  }
-};
-
-const findConnectionConfiguration = (file: string, envName: string) => {
-  const envParameters = process.env[envName];
-
-  if (file) {
-    debug("Provided configuration information from file: " + file);
-    return <ITerminusConnectionObject>getFileJson(file);
-  } else if (envParameters) {
-    try {
-      debug("Provided configuration infomation from TUSPARAMS: " + btoa(envParameters));
-      return <ITerminusConnectionObject>JSON.parse(btoa(envParameters));
-    } catch (e) {
-      console.error(envName + " environment variable not with proper base64 encoded JSON string");
-    }
-  }
-  debug("No provided connection information");
-  return <ITerminusConnectionObject>{};
-};
-
-const exampleConnObject = JSON.stringify({
-  url: "http://localhost:6363",
-  apikey: "password",
-  organisation: "admin",
-  db: "mydb",
-  user: "john.doe@example.com",
-});
-
 const connectionObject = findConnectionConfiguration(options.jsonFile, "TUSPARAMS");
-const remoteObject = findConnectionConfiguration(options.jsonFile, "TUSREMOTE");
 
 debug(exampleConnObject);
 
@@ -138,42 +100,16 @@ const consoleDumpJson = (obj: object) => {
 };
 
 if (options.dumpProfile) {
-  const dumpInfo = Object.assign({}, connectionObject);
-  if (dumpInfo.key) {
-    dumpInfo.key = "**** hidden ****";
-  }
-  if (dumpInfo.apikey) {
-    dumpInfo.apikey = "**** hidden ****";
-  }
+  const profile = dumpProfile(connectionObject);
   console.warn("To set the environment variable in bash, use TUSREMOTE to remote services:");
-  console.warn('# export TUSPARAMS="$(echo ' + JSON.stringify(exampleConnObject) + ' |base64)" ');
+  console.warn(profile.exampleEnvString);
   console.log("To debug, export DEBUG='*'");
   console.log("");
   console.warn("Current profile (except for keys):");
-  consoleDumpJson(dumpInfo);
+  consoleDumpJson(profile.info);
   process.exit(0);
 }
 
-const connectClient = (connInfo: ITerminusConnectionObject): any => {
-  if ("key" in connInfo) {
-    return new TerminusClient.WOQLClient(connInfo.url, {
-      db: connInfo.db,
-      key: connInfo.key,
-      user: connInfo.user,
-      organization: connInfo.organisation,
-    });
-  } else {
-    return new TerminusClient.WOQLClient(connInfo.url, {
-      user: connInfo.user,
-      organization: connInfo.organisation,
-    });
-  }
-};
-
-interface WoqlResource {
-  filename: string;
-  data: string|Blob|fs.ReadStream;
-}
 const namedResourceData: Array<WoqlResource> = [];
 
 export const cli = async () => {
@@ -181,240 +117,120 @@ export const cli = async () => {
   debug("Remaining arguments: ", program.args);
   const client = connectClient(connectionObject);
 
-  // Make local and remote authentication
-  // Convert to new connection object for the TUSPARAMS
-  // client.remoteAuth({"key":"randomkey","type":"jwt"})
+  configureClient(client, connectionObject, {
+    dataProduct: options.dataProduct,
+    system: options.system,
+    branch: options.branch,
+    commit: options.commit,
+  });
 
-  if ("apikey" in connectionObject) {
-    client.setApiKey(connectionObject.apikey);
-  } else if ("jwt" in connectionObject) {
-    client.localAuth({ "key": connectionObject.jwt, "type": "jwt" })
-  }
-  client.organization(connectionObject.organisation);
-  client.db(connectionObject.db);
-
-  if (options.dataProduct) {
-    client.db(options.dataProduct)
-  }
-
-  const selectGraph = (selectedGraph: GraphSelection) => {
-    switch (selectedGraph) {
-      case "schema":
-        return selectedGraph;
-      case "instance":
-        return selectedGraph;
-      default:
-        if (typeof selectedGraph === "string") {
-          return selectedGraph;
-        } else {
-          return GraphSelection.INSTANCE;
-        }
-    }
-  };
-
-  let database: GraphSelection = selectGraph(options.instance);
+  const database = selectGraph(options.instance);
   if (options.quiet) {
     showOutput = false;
   }
 
-  if (options.system) {
-    client.setSystemDb();
-  }
-
-  if (options.branch) {
-    client.checkout(options.branch);
-  }
-
   if (options.woqlResource) {
     for (const filename of options.woqlResource) {
-      if(typeof filename !== "string") { continue; }
+      if (typeof filename !== "string") { continue; }
       namedResourceData.push({
         filename,
-        data: fs.createReadStream(filename)
-      })
+        data: fs.createReadStream(filename),
+      });
     }
   }
 
-  if (options.commit) {
-    client.ref(options.commit);
-  }
-
   if (options.commitGraph) {
-    const defaultLength = 10;
-    const commitBindings = (
-      await client.query(
-        WOQL.lib().commits(
-          options.branch ?? undefined,
-          // lint: allow string | number for commit count
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          typeof options.commitGraph === "string" ? options.commitGraph : defaultLength as any
-        )
-      )
-    ).bindings;
-    consoleDumpJson(commitBindings);
+    consoleDumpJson(await getCommitGraph(client, options.commitGraph, options.branch));
   }
 
   if (options.exportSchema) {
-    consoleDumpJson(await client.getSchema());
+    consoleDumpJson(await exportSchema(client));
   }
 
   if (options.create) {
-    debug(
-      program.args
-        .map((fileName) => getFileJson(fileName))
-        .map(async (obj) => {
-          await client.addDocument(obj, { graph_type: database });
-        })
-    );
+    debug(await createDocument(client, program.args, database));
   }
 
   if (options.createFromJson) {
-    debug(
-      program.args
-        .map(async (obj) => {
-          await client.addDocument(obj, { graph_type: database });
-        })
-    );
+    debug(await createDocumentFromJson(client, program.args, database));
   }
 
   if (options.update) {
-    debug(
-      program.args
-        .map((fileName) => getFileJson(fileName))
-        .map(async (obj) => {
-          await client.updateDocument(obj, { id: options.update, graph_type: database });
-        })
-    );
+    debug(await updateDocument(client, options.update, program.args, database));
   }
 
   if (typeof options.queryDocuments === "string") {
-    if (!options.queryDocuments) throw new Error("No query template provided");
-    consoleDumpJson(await client.queryDocument(JSON.parse(options.queryDocuments), { as_list: true, graph_type: database }));
+    consoleDumpJson(await queryDocuments(client, options.queryDocuments, database));
   }
 
   if (typeof options.read === "string") {
-    if (!options.read) throw new Error("No documentId to read provided");
-    consoleDumpJson(await client.getDocument({ id: options.read, graph_type: database }));
+    consoleDumpJson(await readDocument(client, options.read, database));
   }
 
   if (typeof options.schemaFrame === "string") {
-    if (!options.schemaFrame) throw new Error("No documentId to get the frame for provided");
-    consoleDumpJson(await client.getSchemaFrame(options.schemaFrame));
+    consoleDumpJson(await getSchemaFrame(client, options.schemaFrame));
   }
 
   if (typeof options.delete === "string") {
-    if (!options.delete) throw new Error("Document to delete was not provided");
-    consoleDumpJson(await client.deleteDocument({ id: [options.delete], graph_type: database }));
+    consoleDumpJson(await deleteDocument(client, options.delete, database));
   }
 
   if (typeof options.optimize === "string") {
-    if (!options.optimize) throw new Error("What to optimize was not provided");
-    consoleDumpJson(await client.optimizeBranch(options.optimize));
+    consoleDumpJson(await optimizeBranch(client, options.optimize));
   }
 
   if (typeof options.createDatabase === "string") {
     const createJsonFromFileNameParameter = program.args[0]; // Not supported by commander
-    if (!options.createDatabase) throw new Error("Database name to create was not provided");
-    let createJson = await (async () => JSON.parse(createJsonFromFileNameParameter))()
-      .then((res) => res)
-      .catch(() => ({}));
-    if (createJson.schema === "false") {
-      throw new Error('Error: schema element must be a boolean or undefined, and not "false". If undefined, it defaults to true.');
-    }
-    const databaseCreationOptions = {
-      schema: typeof createJson.schema === "boolean" ? createJson.schema : true,
-      label: typeof createJson.label === "string" ? createJson.label : "",
-      comment: typeof createJson.comment === "string" ? createJson.comment : "",
-    };
-    const result = await client.createDatabase(options.createDatabase, databaseCreationOptions)
+    const result = await createDatabase(client, options.createDatabase, createJsonFromFileNameParameter);
     showOutput && consoleDumpJson(result);
   }
 
   if (typeof options.deleteDatabase === "string") {
-    if (!options.deleteDatabase) throw new Error("Database name to delete/kill was not provided");
-    const result = await client.deleteDatabase(options.deleteDatabase, connectionObject.organisation)
+    const result = await deleteDatabase(client, options.deleteDatabase, connectionObject.organisation);
     showOutput && consoleDumpJson(result);
   }
 
   if (typeof options.createBranch === "string") {
     const createEmptyBranch = program.args[0];
-    if (createEmptyBranch === "true") {
-      const result = await client.branch(options.createBranch, true)
-      showOutput && consoleDumpJson(result)
-    } else {
-      const result = await client.branch(options.createBranch, false);
-      showOutput && consoleDumpJson(result)
-    }
+    const result = await createBranch(client, options.createBranch, createEmptyBranch === "true");
+    showOutput && consoleDumpJson(result);
   }
 
   if (typeof options.deleteBranch === "string") {
-    const result = await client.deleteBranch(options.deleteBranch);
-    showOutput && consoleDumpJson(result)
+    const result = await deleteBranch(client, options.deleteBranch);
+    showOutput && consoleDumpJson(result);
   }
 
   if (options.branches) {
-    consoleDumpJson(await client.getBranches());
+    consoleDumpJson(await getBranches(client));
   }
 
-
-  const parseWoql = (woql: string) => {
-    const normalizeWoql = (str: string): string => str.replace(/\\n/g, " ");
-    return Function('"use strict";return ( function(WOQL, vars){return (' + normalizeWoql(woql) + ").json()});")()(WOQL);
-  };
-
   if (typeof options.deleteDocumentsOfType === "string") {
-    const comment = typeof process.argv[0] === "string" ? process.argv[0] : "tuscli";
-    const parsedWoql = WOQL.and(
-      WOQL.triple("v:DocumentId", "rdf:type", "@schema:" + options.deleteDocumentsOfType),
-      WOQL.delete_document("v:DocumentId")
-    );
-    const result = await client.query(parsedWoql, comment);
+    const result = await deleteDocumentsOfType(client, options.deleteDocumentsOfType);
     showOutput && consoleDumpJson(result);
   }
 
   if (typeof options.deleteDocumentsIsaType === "string") {
-    const comment = typeof process.argv[0] === "string" ? process.argv[0] : "tuscli";
-    const parsedWoql = WOQL.and(
-      WOQL.isa("v:DocumentId", options.deleteDocumentsIsaType),
-      WOQL.delete_document("v:DocumentId")
-    );
-    const result = await client.query(parsedWoql, comment);
+    const result = await deleteDocumentsIsaType(client, options.deleteDocumentsIsaType);
     showOutput && consoleDumpJson(result);
   }
 
   if (typeof options.woql === "string") {
-    const comment = typeof process.argv[0] === "string" ? process.argv[0] : "tuscli";
-    const parsedWoql = parseWoql(options.woql);
-    const suppliedWoql = WOQL.json(parsedWoql);
-    const result = await client.query(suppliedWoql, comment, false, {
-      namedResourceData
-    });
+    const result = await executeWoql(client, options.woql, namedResourceData);
     showOutput && consoleDumpJson(result);
   }
 
   if (typeof options.woqlFile === "string") {
-    const comment = typeof process.argv[0] === "string" ? process.argv[0] : "tuscli";
-    // read file from string options.woqlFile into a string const
-    const woql = fs.readFileSync(options.woqlFile, "utf8");
-    const parsedWoql = parseWoql(woql);
-    const suppliedWoql = WOQL.json(parsedWoql);
-    const result = await client.query(suppliedWoql, { comment, author: "tuscli" }, false, {
-      namedResourceData
-    });
+    const result = await executeWoqlFile(client, options.woqlFile, namedResourceData);
     showOutput && consoleDumpJson(result);
   }
 
   if (typeof options.woqlCompile === "string") {
-    const woql = fs.readFileSync(options.woqlCompile, "utf8");
-    const parsedWoql = parseWoql(woql);
-    const suppliedWoql = WOQL.json(parsedWoql);
-    consoleDumpJson(suppliedWoql);
+    consoleDumpJson(compileWoqlFile(options.woqlCompile));
   }
 
   if (typeof options.compileWoql === "string") {
-    const parsedWoql = parseWoql(options.compileWoql);
-    const suppliedWoql = WOQL.json(parsedWoql);
-    consoleDumpJson(suppliedWoql);
+    consoleDumpJson(compileWoql(options.compileWoql));
   }
 };
 
