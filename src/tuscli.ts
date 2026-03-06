@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-import TerminusClient, { WOQL } from "@terminusdb/terminusdb-client";
+import TerminusClient, { WOQL } from "terminusdb";
 import { Command } from "commander";
 import colorize from "json-colorizer";
 import Debug from "debug";
-import fs from "fs";
+import fs from "node:fs";
 
 const program = new Command();
 const collect = (value: string, previous: Array<string>) => previous.concat([value]);
@@ -160,12 +160,12 @@ const connectClient = (connInfo: ITerminusConnectionObject): any => {
       db: connInfo.db,
       key: connInfo.key,
       user: connInfo.user,
-      organisation: connInfo.organisation,
+      organization: connInfo.organisation,
     });
   } else {
     return new TerminusClient.WOQLClient(connInfo.url, {
       user: connInfo.user,
-      organisation: connInfo.organisation,
+      organization: connInfo.organisation,
     });
   }
 };
@@ -245,7 +245,9 @@ export const cli = async () => {
       await client.query(
         WOQL.lib().commits(
           options.branch ?? undefined,
-          typeof options.commitGraph === "string" ? options.commitGraph : defaultLength
+          // lint: allow string | number for commit count
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          typeof options.commitGraph === "string" ? options.commitGraph : defaultLength as any
         )
       )
     ).bindings;
