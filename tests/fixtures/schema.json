@@ -1,0 +1,9 @@
+{
+  "@type": "Class",
+  "@id": "Entity",
+  "name": "xsd:string",
+  "value": {
+    "@type": "Optional",
+    "@class": "xsd:string"
+  }
+}

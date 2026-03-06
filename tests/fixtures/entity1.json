@@ -1,0 +1,6 @@
+{
+  "@type": "Entity",
+  "@id": "Entity/1",
+  "name": "Test Entity",
+  "value": "test_value"
+}
