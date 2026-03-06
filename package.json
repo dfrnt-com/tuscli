@@ -26,17 +26,17 @@
   },
   "homepage": "https://github.com/hoijnet/tuscli#readme",
   "dependencies": {
-    "@terminusdb/terminusdb-client": "^10.0.32",
     "commander": "^8.3.0",
     "debug": "^4.3.3",
     "json-colorizer": "^2.2.2",
+    "terminusdb": "^12.0.5",
     "tslib": "^2.3.1"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
     "@types/node": "^16.11.21",
     "@vercel/ncc": "^0.38.1",
-    "pkg": "^5.8.0",
+    "@yao-pkg/pkg": "^6.14.1",
     "typescript": "^4.5.5"
   }
 }
