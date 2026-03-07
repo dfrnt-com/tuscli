@@ -20,6 +20,7 @@ export interface ITerminusConnectionObject {
   apikey?: string;
   jwt?: string;
   user?: string;
+  author?: string;
   organisation: string;
   db: string;
   repo?: RepoType | string;
@@ -62,6 +63,19 @@ export const findConnectionConfiguration = (file: string, envName: string): ITer
       console.error(envName + " environment variable not with proper base64 encoded JSON string");
     }
   }
+
+  // Docker secrets: check /run/secrets/<envName_lowercase>
+  const secretPath = "/run/secrets/" + envName.toLowerCase();
+  if (fs.existsSync(secretPath)) {
+    try {
+      const secretContent = fs.readFileSync(secretPath, "utf-8").trim();
+      debug("Provided configuration from Docker secret: " + secretPath);
+      return <ITerminusConnectionObject>JSON.parse(btoa(secretContent));
+    } catch (e) {
+      console.error("Docker secret at " + secretPath + " is not a proper base64 encoded JSON string");
+    }
+  }
+
   debug("No provided connection information");
   return <ITerminusConnectionObject>{};
 };
@@ -119,6 +133,9 @@ export const configureClient = (
   }
   if (overrides.commit) {
     client.ref(overrides.commit);
+  }
+  if (connInfo.author) {
+    client.set({ user: connInfo.author });
   }
 };
 

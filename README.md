@@ -134,6 +134,118 @@ Options:
   -h, --help                                       display help for command
 ```
 
+## MCP Server (Model Context Protocol)
+
+tuscli includes a built-in MCP server that exposes all TerminusDB operations as tools for AI assistants like Claude, Cursor, and other MCP-compatible clients.
+
+### Launch via CLI
+
+```bash
+$ node dist/tuscli.js --mcp
+```
+
+Or using npm:
+
+```bash
+$ npm run mcp
+```
+
+### MCP Client Configuration
+
+Add tuscli to your MCP client configuration (e.g. `claude_desktop_config.json` or `.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "tuscli": {
+      "command": "node",
+      "args": ["/path/to/tuscli/dist/tuscli.js", "--mcp"],
+      "env": {
+        "TUSPARAMS": "<base64-encoded-connection-json>"
+      }
+    }
+  }
+}
+```
+
+Generate the `TUSPARAMS` value:
+
+```bash
+$ echo '{"url":"http://localhost:6363","key":"root","user":"admin","organisation":"admin","db":"mydb"}' | base64
+```
+
+### Author and Commit Messages
+
+Every write operation in TerminusDB records an **author** and a **commit message** in the commit history, just like Git.
+
+**Author** is derived from the `user` field in your `TUSPARAMS` connection configuration. Set this to a meaningful identifier for your use case:
+
+```bash
+# For a human user
+$ echo '{"url":"http://localhost:6363","key":"root","user":"jane.doe@example.com","organisation":"admin","db":"mydb"}' | base64
+
+# For an AI assistant
+$ echo '{"url":"http://localhost:6363","key":"root","user":"ai-assistant","organisation":"admin","db":"mydb"}' | base64
+```
+
+**Commit message** can be set per-operation via the `message` parameter on every write tool (`create_document`, `update_document`, `delete_document`, `delete_documents_of_type`, `execute_woql`). If not provided, a sensible default is used (e.g., "Create document via MCP").
+
+This means:
+- The `user` field in `TUSPARAMS` controls **who** is recorded as the author of each change
+- The `message` parameter on each tool controls **what** is recorded as the reason for the change
+- Both appear in the commit history (viewable via `get_commit_graph`)
+
+### Docker with MCP
+
+```bash
+$ docker run --rm -i -e TUSPARAMS="$TUSPARAMS" hoijnet/tuscli --mcp
+```
+
+### Docker Secrets
+
+When running in Docker Swarm or Compose, tuscli can read connection configuration from Docker secrets. Create a secret named `tusparams` containing the base64-encoded connection JSON:
+
+```yaml
+# docker-compose.yml
+services:
+  tuscli-mcp:
+    image: hoijnet/tuscli
+    command: ["--mcp"]
+    secrets:
+      - tusparams
+
+secrets:
+  tusparams:
+    file: ./tusparams.txt
+```
+
+Where `tusparams.txt` contains the base64-encoded connection JSON (same format as the `TUSPARAMS` environment variable).
+
+The secret is read from `/run/secrets/tusparams` inside the container. The environment variable takes precedence if both are set.
+
+### Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `create_database` | Create a new database |
+| `delete_database` | Delete a database |
+| `create_document` | Create a document from JSON |
+| `read_document` | Read a document by ID |
+| `update_document` | Update an existing document |
+| `delete_document` | Delete a document by ID |
+| `query_documents` | Query documents by type |
+| `delete_documents_of_type` | Delete all documents of a type |
+| `export_schema` | Export the instance schema |
+| `get_schema_frame` | Get the schema frame for a type |
+| `list_branches` | List branches |
+| `create_branch` | Create a branch |
+| `delete_branch` | Delete a branch |
+| `execute_woql` | Execute a WOQL query |
+| `compile_woql` | Compile WOQL to JSON AST |
+| `get_commit_graph` | Get commit history |
+| `optimize_branch` | Optimize a branch |
+| `dump_profile` | Show connection profile |
+
 ## Contributing
 
 This is an independent single-contributor project (so far) done in my free time so issues may take time to get resolved (pull requests get issues resolved the fastest).
@@ -167,6 +279,40 @@ $ docker push hoijnet/tuscli
 ```sh
 bun build ./src/tuscli.ts --compile --outfile tuscli
 ```
+
+## To start your MCP server with Docker
+
+On macOS, use `host.docker.internal` to reach TerminusDB running on the host:
+
+```json
+{
+  "name": "TerminusDB",
+  "command": "docker",
+  "args": [
+    "run",
+    "--rm",
+    "-i",
+    "-e",
+    "TUSPARAMS=eyJ1cmwiOiJodHRwOi8vdGVybWludXNkYjo2MzYzIiwia2V5Ijoicm9vdCIsInVzZXIiOiJhZG1pbiIsImF1dGhvciI6ImphbmUuZG9lQGV4YW1wbGUuY29tIiwib3JnYW5pc2F0aW9uIjoiYWRtaW4iLCJkYiI6Im15ZGIifQo=",
+    "ghcr.io/hoijnet/tuscli:latest",
+    "--mcp"
+  ]
+}
+```
+
+```bash
+export TUSPARAMS="$(echo '{"url":"http://terminusdb:6363","key":"root","user":"admin","author":"jane.doe@example.com","organisation":"admin","db":"mydb"}' | base64 )"
+```
+
+The `author` field in TUSPARAMS is used as the commit **author** for all write operations. Set it to a meaningful identifier (e.g., `ai-assistant`, `jane.doe@example.com`).
+
+Or from the command line:
+
+```bash
+docker run --rm -i -e TUSPARAMS=eyJ1cmwiOiJodHRwOi8vdGVybWludXNkYjo2MzYzIiwia2V5Ijoicm9vdCIsInVzZXIiOiJhZG1pbiIsImF1dGhvciI6ImphbmUuZG9lQGV4YW1wbGUuY29tIiwib3JnYW5pc2F0aW9uIjoiYWRtaW4iLCJkYiI6Im15ZGIifQo= hoijnet/tuscli:latest --mcp
+```
+
+On Linux, you can use `localhost` directly (optionally with `--net=host`).
 
 ## Dependencies and mentions
 

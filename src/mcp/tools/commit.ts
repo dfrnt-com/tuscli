@@ -9,10 +9,22 @@ export function registerCommitTools(
   // @ts-ignore - MCP SDK type inference too deep for this signature
   server.tool(
     "get_commit_graph",
-    "Retrieve the commit history for the data product",
+    `Retrieve the commit history for the database. Each commit represents a change made to the data or schema, similar to Git commits.
+
+Returns a list of commits with timestamps, authors, and messages. Use this to inspect recent changes or audit the history.
+
+Example: Get the last 10 commits (default)
+  (no parameters needed)
+
+Example: Get the last 50 commits
+  count: 50
+
+Example: Get commits for a specific branch
+  branch: "dev"
+  count: 20`,
     {
-      count: z.number().optional().describe("Number of commits to retrieve (default: 10)"),
-      branch: z.string().optional().describe("Branch to get commits for"),
+      count: z.number().optional().describe("Number of recent commits to retrieve (default: 10). Increase for deeper history."),
+      branch: z.string().optional().describe("Branch to get commit history for. Defaults to the main branch."),
     },
     async ({ count, branch }) => {
       const client = createClient({ branch });

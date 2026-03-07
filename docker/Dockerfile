@@ -1,22 +1,22 @@
-FROM node AS build
+FROM node:20-slim AS build
 
 RUN mkdir -p /build
 COPY src /build/src
-COPY dist /build/dist
 COPY types /build/types
 COPY package.json /build/
 COPY package-lock.json /build/
 COPY tsconfig.json /build/
 WORKDIR /build
 
-RUN rm package-lock.json
-RUN npx bun install
-RUN npx npm run buildexe
-RUN chmod 755 /build/bin/tuscli
+RUN npm ci --ignore-scripts
+RUN npm run build
 
-FROM scratch
-COPY --from=build /build/bin/tuscli /bin/tuscli
+FROM node:20-slim
+WORKDIR /app
+COPY --from=build /build/dist /app/dist
+COPY --from=build /build/node_modules /app/node_modules
+COPY --from=build /build/package.json /app/package.json
 USER 998
 
-ENTRYPOINT ["/bin/tuscli"]
+ENTRYPOINT ["node", "dist/tuscli.js"]
 CMD ["--help"]

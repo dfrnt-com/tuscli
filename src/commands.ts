@@ -1,15 +1,28 @@
 import { WOQL } from "terminusdb";
 import fs from "node:fs";
 import { GraphSelection, getFileJson, ITerminusConnectionObject, exampleConnObject } from "./connection";
+import { assertReadOnly } from "./woql-guard";
 
 export interface WoqlResource {
   filename: string;
   data: string | Blob | fs.ReadStream;
 }
 
+const normalizeWoql = (str: string): string => str.replace(/\\n/g, " ");
+
+/**
+ * Build a WOQL query object from a JS WOQL string.
+ * The returned object has contains_update set by the WOQL library.
+ */
+const buildWoqlObject = (woql: string): any => {
+  return Function('"use strict";return ( function(WOQL, vars){return (' + normalizeWoql(woql) + ")});")()(WOQL);
+};
+
+/**
+ * Parse a JS WOQL string directly into JSON AST.
+ */
 const parseWoql = (woql: string): any => {
-  const normalizeWoql = (str: string): string => str.replace(/\\n/g, " ");
-  return Function('"use strict";return ( function(WOQL, vars){return (' + normalizeWoql(woql) + ").json()});")()(WOQL);
+  return buildWoqlObject(woql).json();
 };
 
 // --- Profile ---
@@ -124,36 +137,39 @@ export const readDocument = async (
 export const deleteDocument = async (
   client: any,
   documentId: string,
-  graphType: GraphSelection
+  graphType: GraphSelection,
+  message?: string
 ): Promise<any> => {
   if (!documentId) throw new Error("Document to delete was not provided");
-  return await client.deleteDocument({ id: [documentId], graph_type: graphType });
+  return await client.deleteDocument({ id: [documentId], graph_type: graphType }, undefined, message || "delete document");
 };
 
 // --- Delete by type ---
 
 export const deleteDocumentsOfType = async (
   client: any,
-  type: string
+  type: string,
+  message?: string
 ): Promise<any> => {
-  const comment = "tuscli";
+  const commitMsg = message || "Delete documents of type " + type;
   const parsedWoql = WOQL.and(
     WOQL.triple("v:DocumentId", "rdf:type", "@schema:" + type),
     WOQL.delete_document("v:DocumentId")
   );
-  return await client.query(parsedWoql, comment);
+  return await client.query(parsedWoql, commitMsg);
 };
 
 export const deleteDocumentsIsaType = async (
   client: any,
-  type: string
+  type: string,
+  message?: string
 ): Promise<any> => {
-  const comment = "tuscli";
+  const commitMsg = message || "Delete documents isa type " + type;
   const parsedWoql = WOQL.and(
     WOQL.isa("v:DocumentId", type),
     WOQL.delete_document("v:DocumentId")
   );
-  return await client.query(parsedWoql, comment);
+  return await client.query(parsedWoql, commitMsg);
 };
 
 // --- Optimize ---
@@ -222,24 +238,34 @@ export const getBranches = async (client: any): Promise<any> => {
 export const executeWoql = async (
   client: any,
   woqlString: string,
-  namedResourceData: WoqlResource[] = []
+  namedResourceData: WoqlResource[] = [],
+  readonly: boolean = false,
+  message?: string
 ): Promise<any> => {
-  const comment = "tuscli";
-  const parsedWoql = parseWoql(woqlString);
-  const suppliedWoql = WOQL.json(parsedWoql);
-  return await client.query(suppliedWoql, comment, false, { namedResourceData });
+  const commitMsg = message || "WOQL query via MCP";
+  const woqlObject = buildWoqlObject(woqlString);
+  if (readonly) {
+    assertReadOnly(woqlObject);
+  }
+  const suppliedWoql = WOQL.json(woqlObject.json());
+  return await client.query(suppliedWoql, commitMsg, false, { namedResourceData });
 };
 
 export const executeWoqlFile = async (
   client: any,
   filePath: string,
-  namedResourceData: WoqlResource[] = []
+  namedResourceData: WoqlResource[] = [],
+  readonly: boolean = false,
+  message?: string
 ): Promise<any> => {
-  const comment = "tuscli";
+  const commitMsg = message || "WOQL file query via tuscli";
   const woql = fs.readFileSync(filePath, "utf8");
-  const parsedWoql = parseWoql(woql);
-  const suppliedWoql = WOQL.json(parsedWoql);
-  return await client.query(suppliedWoql, { comment, author: "tuscli" }, false, { namedResourceData });
+  const woqlObject = buildWoqlObject(woql);
+  if (readonly) {
+    assertReadOnly(woqlObject);
+  }
+  const suppliedWoql = WOQL.json(woqlObject.json());
+  return await client.query(suppliedWoql, commitMsg, false, { namedResourceData });
 };
 
 export const compileWoql = (woqlString: string): any => {

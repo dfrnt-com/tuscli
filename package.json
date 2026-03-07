@@ -27,11 +27,13 @@
   },
   "homepage": "https://github.com/hoijnet/tuscli#readme",
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "commander": "^8.3.0",
     "debug": "^4.3.3",
     "json-colorizer": "^2.2.2",
     "terminusdb": "^12.0.5",
-    "tslib": "^2.3.1"
+    "tslib": "^2.3.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/chai": "^5.2.3",
@@ -43,6 +45,6 @@
     "chai": "^6.2.2",
     "mocha": "^11.3.0",
     "ts-node": "^10.9.2",
-    "typescript": "^4.5.5"
+    "typescript": "^5.9.3"
   }
 }

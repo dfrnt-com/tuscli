@@ -11,12 +11,26 @@ export function registerDatabaseTools(
   // @ts-ignore - MCP SDK type inference too deep for this signature
   server.tool(
     "create_database",
-    "Create a new TerminusDB database/data product",
+    `Create a new TerminusDB database (also called a data product). This must be called before any document or schema operations on a new database.
+
+Typical workflow:
+1. create_database — create the database
+2. create_document with graph_type "schema" — define your schema classes
+3. create_document — add instance documents conforming to the schema
+
+Example: Create a database called "myproject"
+  name: "myproject"
+  label: "My Project"
+  comment: "Project knowledge graph"
+
+Example: Create a database with no schema graph
+  name: "scratch"
+  schema: false`,
     {
-      name: z.string().describe("Database name to create"),
-      label: z.string().optional().describe("Human-readable label for the database"),
-      comment: z.string().optional().describe("Description/comment for the database"),
-      schema: z.boolean().optional().describe("Whether to create with schema graph (default: true)"),
+      name: z.string().describe("Database name/identifier (e.g., 'myproject'). Must be a valid identifier without spaces."),
+      label: z.string().optional().describe("Human-readable display label for the database. Defaults to the name if not provided."),
+      comment: z.string().optional().describe("Description or comment about the database purpose."),
+      schema: z.boolean().optional().describe("Whether to create with a schema graph (default: true). Set to false for schema-free databases."),
     },
     async ({ name, label, comment, schema }) => {
       const client = createClient();
@@ -32,9 +46,12 @@ export function registerDatabaseTools(
 
   server.tool(
     "delete_database",
-    "Delete a TerminusDB database/data product",
+    `Permanently delete a TerminusDB database and all its data, branches, and history. This action cannot be undone.
+
+Example: Delete a database called "scratch"
+  name: "scratch"`,
     {
-      name: z.string().describe("Database name to delete"),
+      name: z.string().describe("Database name/identifier to delete (e.g., 'scratch'). The database and all its contents will be permanently removed."),
     },
     async ({ name }) => {
       const client = createClient();
