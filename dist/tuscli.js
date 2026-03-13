@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cli = void 0;
 var tslib_1 = require("tslib");
-var terminusdb_client_1 = tslib_1.__importStar(require("@terminusdb/terminusdb-client"));
 var commander_1 = require("commander");
 var json_colorizer_1 = tslib_1.__importDefault(require("json-colorizer"));
 var debug_1 = tslib_1.__importDefault(require("debug"));
-var fs_1 = tslib_1.__importDefault(require("fs"));
+var node_fs_1 = tslib_1.__importDefault(require("node:fs"));
+var connection_1 = require("./connection");
+var commands_1 = require("./commands");
 var program = new commander_1.Command();
 var collect = function (value, previous) { return previous.concat([value]); };
 program
-    .version("0.2.4")
+    .version("0.2.5")
     .description("TerminusDB Javascript cli: tuscli [options] <fileName(s)>")
     .option("-c, --create", "create document from provided file")
     .option("--createFromJson", "create document from supplied JSON, like '{\"@id\":\"Entity/1\", \"@type\":\"Entity\"}'")
@@ -44,400 +44,216 @@ program
     .option("--woqlResource <file>", "named file resource(s) to attach to WOQL query (such as csv)", collect, [])
     .option("--woqlFile <example.woql.js>", "Execute JS WOQL (from a file)")
     .option("--woqlCompile <example.woql.js>", "Compile JS WOQL into JSON WOQL (from a file)")
+    .option("--mcp", "Launch as an MCP (Model Context Protocol) server over stdio")
     .parse(process.argv);
-var GraphSelection;
-(function (GraphSelection) {
-    GraphSelection["SCHEMA"] = "schema";
-    GraphSelection["INSTANCE"] = "instance";
-})(GraphSelection || (GraphSelection = {}));
-var RepoType;
-(function (RepoType) {
-    RepoType["local"] = "local";
-    RepoType["remote"] = "remote";
-})(RepoType || (RepoType = {}));
 var options = program.opts();
 var debug = (0, debug_1.default)("Zebra CLI");
-if (Object.keys(options).length === 0) {
-    program.help();
+if (options.mcp) {
+    // Launch MCP server — dynamic import to avoid loading MCP deps for normal CLI usage
+    require("./mcp/server");
 }
-var showOutput = true;
-var btoa = function (b) { return Buffer.from(b, "base64").toString("binary"); };
-var getFileJson = function (path) {
-    try {
-        var fileAtPath = path === "-" ? "/dev/stdin" : path;
-        if (!fs_1.default.existsSync(fileAtPath)) {
-            throw new Error("File does not exist");
+else {
+    // Normal CLI mode
+    if (Object.keys(options).length === 0) {
+        program.help();
+    }
+    var showOutput_1 = true;
+    var connectionObject_1 = (0, connection_1.findConnectionConfiguration)(options.jsonFile, "TUSPARAMS");
+    debug(connection_1.exampleConnObject);
+    var consoleDumpJson_1 = function (obj) {
+        var json = JSON.stringify(obj, null, 2);
+        if (options.nocolor) {
+            console.log(json);
         }
-        try {
-            return JSON.parse(fs_1.default.readFileSync(fileAtPath, { encoding: "utf-8" }).toString());
+        else {
+            console.log((0, json_colorizer_1.default)(json, { pretty: true }));
         }
-        catch (e) {
-            throw new Error("Could not parse the file correctly, likely bad JSON");
-        }
+    };
+    if (options.dumpProfile) {
+        var profile = (0, commands_1.dumpProfile)(connectionObject_1);
+        console.warn("To set the environment variable in bash, use TUSREMOTE to remote services:");
+        console.warn(profile.exampleEnvString);
+        console.log("To debug, export DEBUG='*'");
+        console.log("");
+        console.warn("Current profile (except for keys):");
+        consoleDumpJson_1(profile.info);
+        process.exit(0);
     }
-    catch (e) {
-        console.error("Could handle input file correctly: ", path);
-        console.log(e);
-        process.exit(1);
-    }
-};
-var findConnectionConfiguration = function (file, envName) {
-    var envParameters = process.env[envName];
-    if (file) {
-        debug("Provided configuration information from file: " + file);
-        return getFileJson(file);
-    }
-    else if (envParameters) {
-        try {
-            debug("Provided configuration infomation from TUSPARAMS: " + btoa(envParameters));
-            return JSON.parse(btoa(envParameters));
-        }
-        catch (e) {
-            console.error(envName + " environment variable not with proper base64 encoded JSON string");
-        }
-    }
-    debug("No provided connection information");
-    return {};
-};
-var exampleConnObject = JSON.stringify({
-    url: "http://localhost:6363",
-    apikey: "password",
-    organisation: "admin",
-    db: "mydb",
-    user: "john.doe@example.com",
-});
-var connectionObject = findConnectionConfiguration(options.jsonFile, "TUSPARAMS");
-var remoteObject = findConnectionConfiguration(options.jsonFile, "TUSREMOTE");
-debug(exampleConnObject);
-var consoleDumpJson = function (obj) {
-    var json = JSON.stringify(obj, null, 2);
-    if (options.nocolor) {
-        console.log(json);
-    }
-    else {
-        console.log((0, json_colorizer_1.default)(json, { pretty: true }));
-    }
-};
-if (options.dumpProfile) {
-    var dumpInfo = Object.assign({}, connectionObject);
-    if (dumpInfo.key) {
-        dumpInfo.key = "**** hidden ****";
-    }
-    if (dumpInfo.apikey) {
-        dumpInfo.apikey = "**** hidden ****";
-    }
-    console.warn("To set the environment variable in bash, use TUSREMOTE to remote services:");
-    console.warn('# export TUSPARAMS="$(echo ' + JSON.stringify(exampleConnObject) + ' |base64)" ');
-    console.log("To debug, export DEBUG='*'");
-    console.log("");
-    console.warn("Current profile (except for keys):");
-    consoleDumpJson(dumpInfo);
-    process.exit(0);
-}
-var connectClient = function (connInfo) {
-    if ("key" in connInfo) {
-        return new terminusdb_client_1.default.WOQLClient(connInfo.url, {
-            db: connInfo.db,
-            key: connInfo.key,
-            user: connInfo.user,
-            organisation: connInfo.organisation,
-        });
-    }
-    else {
-        return new terminusdb_client_1.default.WOQLClient(connInfo.url, {
-            user: connInfo.user,
-            organisation: connInfo.organisation,
-        });
-    }
-};
-var namedResourceData = [];
-var cli = function () { return tslib_1.__awaiter(void 0, void 0, void 0, function () {
-    var client, selectGraph, database, _i, _a, filename, defaultLength, commitBindings, _b, _c, _d, _e, _f, _g, createJsonFromFileNameParameter_1, createJson, databaseCreationOptions, result, result, createEmptyBranch, result, result, result, _h, parseWoql, comment, parsedWoql, result, comment, parsedWoql, result, comment, parsedWoql, suppliedWoql, result, comment, woql, parsedWoql, suppliedWoql, result, woql, parsedWoql, suppliedWoql, parsedWoql, suppliedWoql;
-    var _j;
-    return tslib_1.__generator(this, function (_k) {
-        switch (_k.label) {
-            case 0:
-                debug("Options: ", options);
-                debug("Remaining arguments: ", program.args);
-                client = connectClient(connectionObject);
-                // Make local and remote authentication
-                // Convert to new connection object for the TUSPARAMS
-                // client.remoteAuth({"key":"randomkey","type":"jwt"})
-                if ("apikey" in connectionObject) {
-                    client.setApiKey(connectionObject.apikey);
-                }
-                else if ("jwt" in connectionObject) {
-                    client.localAuth({ "key": connectionObject.jwt, "type": "jwt" });
-                }
-                client.organization(connectionObject.organisation);
-                client.db(connectionObject.db);
-                if (options.dataProduct) {
-                    client.db(options.dataProduct);
-                }
-                selectGraph = function (selectedGraph) {
-                    switch (selectedGraph) {
-                        case "schema":
-                            return selectedGraph;
-                        case "instance":
-                            return selectedGraph;
-                        default:
-                            if (typeof selectedGraph === "string") {
-                                return selectedGraph;
-                            }
-                            else {
-                                return GraphSelection.INSTANCE;
-                            }
+    var namedResourceData_1 = [];
+    var cli = function () { return tslib_1.__awaiter(void 0, void 0, void 0, function () {
+        var client, database, _i, _a, filename, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, createJsonFromFileNameParameter, result, result, createEmptyBranch, result, result, _m, result, result, result, result;
+        return tslib_1.__generator(this, function (_o) {
+            switch (_o.label) {
+                case 0:
+                    debug("Options: ", options);
+                    debug("Remaining arguments: ", program.args);
+                    client = (0, connection_1.connectClient)(connectionObject_1);
+                    (0, connection_1.configureClient)(client, connectionObject_1, {
+                        dataProduct: options.dataProduct,
+                        system: options.system,
+                        branch: options.branch,
+                        commit: options.commit,
+                    });
+                    database = (0, connection_1.selectGraph)(options.instance);
+                    if (options.quiet) {
+                        showOutput_1 = false;
                     }
-                };
-                database = selectGraph(options.instance);
-                if (options.quiet) {
-                    showOutput = false;
-                }
-                if (options.system) {
-                    client.setSystemDb();
-                }
-                if (options.branch) {
-                    client.checkout(options.branch);
-                }
-                if (options.woqlResource) {
-                    for (_i = 0, _a = options.woqlResource; _i < _a.length; _i++) {
-                        filename = _a[_i];
-                        if (typeof filename !== "string") {
-                            continue;
+                    if (options.woqlResource) {
+                        for (_i = 0, _a = options.woqlResource; _i < _a.length; _i++) {
+                            filename = _a[_i];
+                            if (typeof filename !== "string") {
+                                continue;
+                            }
+                            namedResourceData_1.push({
+                                filename: filename,
+                                data: node_fs_1.default.createReadStream(filename),
+                            });
                         }
-                        namedResourceData.push({
-                            filename: filename,
-                            data: fs_1.default.createReadStream(filename)
-                        });
                     }
-                }
-                if (options.commit) {
-                    client.ref(options.commit);
-                }
-                if (!options.commitGraph) return [3 /*break*/, 2];
-                defaultLength = 10;
-                return [4 /*yield*/, client.query(terminusdb_client_1.WOQL.lib().commits((_j = options.branch) !== null && _j !== void 0 ? _j : undefined, typeof options.commitGraph === "string" ? options.commitGraph : defaultLength))];
-            case 1:
-                commitBindings = (_k.sent()).bindings;
-                consoleDumpJson(commitBindings);
-                _k.label = 2;
-            case 2:
-                if (!options.exportSchema) return [3 /*break*/, 4];
-                _b = consoleDumpJson;
-                return [4 /*yield*/, client.getSchema()];
-            case 3:
-                _b.apply(void 0, [_k.sent()]);
-                _k.label = 4;
-            case 4:
-                if (options.create) {
-                    debug(program.args
-                        .map(function (fileName) { return getFileJson(fileName); })
-                        .map(function (obj) { return tslib_1.__awaiter(void 0, void 0, void 0, function () {
-                        return tslib_1.__generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0: return [4 /*yield*/, client.addDocument(obj, { graph_type: database })];
-                                case 1:
-                                    _a.sent();
-                                    return [2 /*return*/];
-                            }
-                        });
-                    }); }));
-                }
-                if (options.createFromJson) {
-                    debug(program.args
-                        .map(function (obj) { return tslib_1.__awaiter(void 0, void 0, void 0, function () {
-                        return tslib_1.__generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0: return [4 /*yield*/, client.addDocument(obj, { graph_type: database })];
-                                case 1:
-                                    _a.sent();
-                                    return [2 /*return*/];
-                            }
-                        });
-                    }); }));
-                }
-                if (options.update) {
-                    debug(program.args
-                        .map(function (fileName) { return getFileJson(fileName); })
-                        .map(function (obj) { return tslib_1.__awaiter(void 0, void 0, void 0, function () {
-                        return tslib_1.__generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0: return [4 /*yield*/, client.updateDocument(obj, { id: options.update, graph_type: database })];
-                                case 1:
-                                    _a.sent();
-                                    return [2 /*return*/];
-                            }
-                        });
-                    }); }));
-                }
-                if (!(typeof options.queryDocuments === "string")) return [3 /*break*/, 6];
-                if (!options.queryDocuments)
-                    throw new Error("No query template provided");
-                _c = consoleDumpJson;
-                return [4 /*yield*/, client.queryDocument(JSON.parse(options.queryDocuments), { as_list: true, graph_type: database })];
-            case 5:
-                _c.apply(void 0, [_k.sent()]);
-                _k.label = 6;
-            case 6:
-                if (!(typeof options.read === "string")) return [3 /*break*/, 8];
-                if (!options.read)
-                    throw new Error("No documentId to read provided");
-                _d = consoleDumpJson;
-                return [4 /*yield*/, client.getDocument({ id: options.read, graph_type: database })];
-            case 7:
-                _d.apply(void 0, [_k.sent()]);
-                _k.label = 8;
-            case 8:
-                if (!(typeof options.schemaFrame === "string")) return [3 /*break*/, 10];
-                if (!options.schemaFrame)
-                    throw new Error("No documentId to get the frame for provided");
-                _e = consoleDumpJson;
-                return [4 /*yield*/, client.getSchemaFrame(options.schemaFrame)];
-            case 9:
-                _e.apply(void 0, [_k.sent()]);
-                _k.label = 10;
-            case 10:
-                if (!(typeof options.delete === "string")) return [3 /*break*/, 12];
-                if (!options.delete)
-                    throw new Error("Document to delete was not provided");
-                _f = consoleDumpJson;
-                return [4 /*yield*/, client.deleteDocument({ id: [options.delete], graph_type: database })];
-            case 11:
-                _f.apply(void 0, [_k.sent()]);
-                _k.label = 12;
-            case 12:
-                if (!(typeof options.optimize === "string")) return [3 /*break*/, 14];
-                if (!options.optimize)
-                    throw new Error("What to optimize was not provided");
-                _g = consoleDumpJson;
-                return [4 /*yield*/, client.optimizeBranch(options.optimize)];
-            case 13:
-                _g.apply(void 0, [_k.sent()]);
-                _k.label = 14;
-            case 14:
-                if (!(typeof options.createDatabase === "string")) return [3 /*break*/, 17];
-                createJsonFromFileNameParameter_1 = program.args[0];
-                if (!options.createDatabase)
-                    throw new Error("Database name to create was not provided");
-                return [4 /*yield*/, (function () { return tslib_1.__awaiter(void 0, void 0, void 0, function () { return tslib_1.__generator(this, function (_a) {
-                        return [2 /*return*/, JSON.parse(createJsonFromFileNameParameter_1)];
-                    }); }); })()
-                        .then(function (res) { return res; })
-                        .catch(function () { return ({}); })];
-            case 15:
-                createJson = _k.sent();
-                if (createJson.schema === "false") {
-                    throw new Error('Error: schema element must be a boolean or undefined, and not "false". If undefined, it defaults to true.');
-                }
-                databaseCreationOptions = {
-                    schema: typeof createJson.schema === "boolean" ? createJson.schema : true,
-                    label: typeof createJson.label === "string" ? createJson.label : "",
-                    comment: typeof createJson.comment === "string" ? createJson.comment : "",
-                };
-                return [4 /*yield*/, client.createDatabase(options.createDatabase, databaseCreationOptions)];
-            case 16:
-                result = _k.sent();
-                showOutput && consoleDumpJson(result);
-                _k.label = 17;
-            case 17:
-                if (!(typeof options.deleteDatabase === "string")) return [3 /*break*/, 19];
-                if (!options.deleteDatabase)
-                    throw new Error("Database name to delete/kill was not provided");
-                return [4 /*yield*/, client.deleteDatabase(options.deleteDatabase, connectionObject.organisation)];
-            case 18:
-                result = _k.sent();
-                showOutput && consoleDumpJson(result);
-                _k.label = 19;
-            case 19:
-                if (!(typeof options.createBranch === "string")) return [3 /*break*/, 23];
-                createEmptyBranch = program.args[0];
-                if (!(createEmptyBranch === "true")) return [3 /*break*/, 21];
-                return [4 /*yield*/, client.branch(options.createBranch, true)];
-            case 20:
-                result = _k.sent();
-                showOutput && consoleDumpJson(result);
-                return [3 /*break*/, 23];
-            case 21: return [4 /*yield*/, client.branch(options.createBranch, false)];
-            case 22:
-                result = _k.sent();
-                showOutput && consoleDumpJson(result);
-                _k.label = 23;
-            case 23:
-                if (!(typeof options.deleteBranch === "string")) return [3 /*break*/, 25];
-                return [4 /*yield*/, client.deleteBranch(options.deleteBranch)];
-            case 24:
-                result = _k.sent();
-                showOutput && consoleDumpJson(result);
-                _k.label = 25;
-            case 25:
-                if (!options.branches) return [3 /*break*/, 27];
-                _h = consoleDumpJson;
-                return [4 /*yield*/, client.getBranches()];
-            case 26:
-                _h.apply(void 0, [_k.sent()]);
-                _k.label = 27;
-            case 27:
-                parseWoql = function (woql) {
-                    var normalizeWoql = function (str) { return str.replace(/\\n/g, " "); };
-                    return Function('"use strict";return ( function(WOQL, vars){return (' + normalizeWoql(woql) + ").json()});")()(terminusdb_client_1.WOQL);
-                };
-                if (!(typeof options.deleteDocumentsOfType === "string")) return [3 /*break*/, 29];
-                comment = typeof process.argv[0] === "string" ? process.argv[0] : "tuscli";
-                parsedWoql = terminusdb_client_1.WOQL.and(terminusdb_client_1.WOQL.triple("v:DocumentId", "rdf:type", "@schema:" + options.deleteDocumentsOfType), terminusdb_client_1.WOQL.delete_document("v:DocumentId"));
-                return [4 /*yield*/, client.query(parsedWoql, comment)];
-            case 28:
-                result = _k.sent();
-                showOutput && consoleDumpJson(result);
-                _k.label = 29;
-            case 29:
-                if (!(typeof options.deleteDocumentsIsaType === "string")) return [3 /*break*/, 31];
-                comment = typeof process.argv[0] === "string" ? process.argv[0] : "tuscli";
-                parsedWoql = terminusdb_client_1.WOQL.and(terminusdb_client_1.WOQL.isa("v:DocumentId", options.deleteDocumentsIsaType), terminusdb_client_1.WOQL.delete_document("v:DocumentId"));
-                return [4 /*yield*/, client.query(parsedWoql, comment)];
-            case 30:
-                result = _k.sent();
-                showOutput && consoleDumpJson(result);
-                _k.label = 31;
-            case 31:
-                if (!(typeof options.woql === "string")) return [3 /*break*/, 33];
-                comment = typeof process.argv[0] === "string" ? process.argv[0] : "tuscli";
-                parsedWoql = parseWoql(options.woql);
-                suppliedWoql = terminusdb_client_1.WOQL.json(parsedWoql);
-                return [4 /*yield*/, client.query(suppliedWoql, comment, false, {
-                        namedResourceData: namedResourceData
-                    })];
-            case 32:
-                result = _k.sent();
-                showOutput && consoleDumpJson(result);
-                _k.label = 33;
-            case 33:
-                if (!(typeof options.woqlFile === "string")) return [3 /*break*/, 35];
-                comment = typeof process.argv[0] === "string" ? process.argv[0] : "tuscli";
-                woql = fs_1.default.readFileSync(options.woqlFile, "utf8");
-                parsedWoql = parseWoql(woql);
-                suppliedWoql = terminusdb_client_1.WOQL.json(parsedWoql);
-                return [4 /*yield*/, client.query(suppliedWoql, { comment: comment, author: "bun" }, false, {
-                        namedResourceData: namedResourceData
-                    })];
-            case 34:
-                result = _k.sent();
-                showOutput && consoleDumpJson(result);
-                _k.label = 35;
-            case 35:
-                if (typeof options.woqlCompile === "string") {
-                    woql = fs_1.default.readFileSync(options.woqlCompile, "utf8");
-                    parsedWoql = parseWoql(woql);
-                    suppliedWoql = terminusdb_client_1.WOQL.json(parsedWoql);
-                    consoleDumpJson(suppliedWoql);
-                }
-                if (typeof options.compileWoql === "string") {
-                    parsedWoql = parseWoql(options.compileWoql);
-                    suppliedWoql = terminusdb_client_1.WOQL.json(parsedWoql);
-                    consoleDumpJson(suppliedWoql);
-                }
-                return [2 /*return*/];
-        }
-    });
-}); };
-exports.cli = cli;
-(0, exports.cli)();
+                    if (!options.commitGraph) return [3 /*break*/, 2];
+                    _b = consoleDumpJson_1;
+                    return [4 /*yield*/, (0, commands_1.getCommitGraph)(client, options.commitGraph, options.branch)];
+                case 1:
+                    _b.apply(void 0, [_o.sent()]);
+                    _o.label = 2;
+                case 2:
+                    if (!options.exportSchema) return [3 /*break*/, 4];
+                    _c = consoleDumpJson_1;
+                    return [4 /*yield*/, (0, commands_1.exportSchema)(client)];
+                case 3:
+                    _c.apply(void 0, [_o.sent()]);
+                    _o.label = 4;
+                case 4:
+                    if (!options.create) return [3 /*break*/, 6];
+                    _d = debug;
+                    return [4 /*yield*/, (0, commands_1.createDocument)(client, program.args, database)];
+                case 5:
+                    _d.apply(void 0, [_o.sent()]);
+                    _o.label = 6;
+                case 6:
+                    if (!options.createFromJson) return [3 /*break*/, 8];
+                    _e = debug;
+                    return [4 /*yield*/, (0, commands_1.createDocumentFromJson)(client, program.args, database)];
+                case 7:
+                    _e.apply(void 0, [_o.sent()]);
+                    _o.label = 8;
+                case 8:
+                    if (!options.update) return [3 /*break*/, 10];
+                    _f = debug;
+                    return [4 /*yield*/, (0, commands_1.updateDocument)(client, options.update, program.args, database)];
+                case 9:
+                    _f.apply(void 0, [_o.sent()]);
+                    _o.label = 10;
+                case 10:
+                    if (!(typeof options.queryDocuments === "string")) return [3 /*break*/, 12];
+                    _g = consoleDumpJson_1;
+                    return [4 /*yield*/, (0, commands_1.queryDocuments)(client, options.queryDocuments, database)];
+                case 11:
+                    _g.apply(void 0, [_o.sent()]);
+                    _o.label = 12;
+                case 12:
+                    if (!(typeof options.read === "string")) return [3 /*break*/, 14];
+                    _h = consoleDumpJson_1;
+                    return [4 /*yield*/, (0, commands_1.readDocument)(client, options.read, database)];
+                case 13:
+                    _h.apply(void 0, [_o.sent()]);
+                    _o.label = 14;
+                case 14:
+                    if (!(typeof options.schemaFrame === "string")) return [3 /*break*/, 16];
+                    _j = consoleDumpJson_1;
+                    return [4 /*yield*/, (0, commands_1.getSchemaFrame)(client, options.schemaFrame)];
+                case 15:
+                    _j.apply(void 0, [_o.sent()]);
+                    _o.label = 16;
+                case 16:
+                    if (!(typeof options.delete === "string")) return [3 /*break*/, 18];
+                    _k = consoleDumpJson_1;
+                    return [4 /*yield*/, (0, commands_1.deleteDocument)(client, options.delete, database)];
+                case 17:
+                    _k.apply(void 0, [_o.sent()]);
+                    _o.label = 18;
+                case 18:
+                    if (!(typeof options.optimize === "string")) return [3 /*break*/, 20];
+                    _l = consoleDumpJson_1;
+                    return [4 /*yield*/, (0, commands_1.optimizeBranch)(client, options.optimize)];
+                case 19:
+                    _l.apply(void 0, [_o.sent()]);
+                    _o.label = 20;
+                case 20:
+                    if (!(typeof options.createDatabase === "string")) return [3 /*break*/, 22];
+                    createJsonFromFileNameParameter = program.args[0];
+                    return [4 /*yield*/, (0, commands_1.createDatabase)(client, options.createDatabase, createJsonFromFileNameParameter)];
+                case 21:
+                    result = _o.sent();
+                    showOutput_1 && consoleDumpJson_1(result);
+                    _o.label = 22;
+                case 22:
+                    if (!(typeof options.deleteDatabase === "string")) return [3 /*break*/, 24];
+                    return [4 /*yield*/, (0, commands_1.deleteDatabase)(client, options.deleteDatabase, connectionObject_1.organisation)];
+                case 23:
+                    result = _o.sent();
+                    showOutput_1 && consoleDumpJson_1(result);
+                    _o.label = 24;
+                case 24:
+                    if (!(typeof options.createBranch === "string")) return [3 /*break*/, 26];
+                    createEmptyBranch = program.args[0];
+                    return [4 /*yield*/, (0, commands_1.createBranch)(client, options.createBranch, createEmptyBranch === "true")];
+                case 25:
+                    result = _o.sent();
+                    showOutput_1 && consoleDumpJson_1(result);
+                    _o.label = 26;
+                case 26:
+                    if (!(typeof options.deleteBranch === "string")) return [3 /*break*/, 28];
+                    return [4 /*yield*/, (0, commands_1.deleteBranch)(client, options.deleteBranch)];
+                case 27:
+                    result = _o.sent();
+                    showOutput_1 && consoleDumpJson_1(result);
+                    _o.label = 28;
+                case 28:
+                    if (!options.branches) return [3 /*break*/, 30];
+                    _m = consoleDumpJson_1;
+                    return [4 /*yield*/, (0, commands_1.getBranches)(client)];
+                case 29:
+                    _m.apply(void 0, [_o.sent()]);
+                    _o.label = 30;
+                case 30:
+                    if (!(typeof options.deleteDocumentsOfType === "string")) return [3 /*break*/, 32];
+                    return [4 /*yield*/, (0, commands_1.deleteDocumentsOfType)(client, options.deleteDocumentsOfType)];
+                case 31:
+                    result = _o.sent();
+                    showOutput_1 && consoleDumpJson_1(result);
+                    _o.label = 32;
+                case 32:
+                    if (!(typeof options.deleteDocumentsIsaType === "string")) return [3 /*break*/, 34];
+                    return [4 /*yield*/, (0, commands_1.deleteDocumentsIsaType)(client, options.deleteDocumentsIsaType)];
+                case 33:
+                    result = _o.sent();
+                    showOutput_1 && consoleDumpJson_1(result);
+                    _o.label = 34;
+                case 34:
+                    if (!(typeof options.woql === "string")) return [3 /*break*/, 36];
+                    return [4 /*yield*/, (0, commands_1.executeWoql)(client, options.woql, namedResourceData_1)];
+                case 35:
+                    result = _o.sent();
+                    showOutput_1 && consoleDumpJson_1(result);
+                    _o.label = 36;
+                case 36:
+                    if (!(typeof options.woqlFile === "string")) return [3 /*break*/, 38];
+                    return [4 /*yield*/, (0, commands_1.executeWoqlFile)(client, options.woqlFile, namedResourceData_1)];
+                case 37:
+                    result = _o.sent();
+                    showOutput_1 && consoleDumpJson_1(result);
+                    _o.label = 38;
+                case 38:
+                    if (typeof options.woqlCompile === "string") {
+                        consoleDumpJson_1((0, commands_1.compileWoqlFile)(options.woqlCompile));
+                    }
+                    if (typeof options.compileWoql === "string") {
+                        consoleDumpJson_1((0, commands_1.compileWoql)(options.compileWoql));
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    }); };
+    cli();
+}

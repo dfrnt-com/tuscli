@@ -75,6 +75,7 @@ WOQL is based on Prolog and datalog. It works through unification and pattern ma
 - WOQL.eq(a, b) is UNIFICATION, not assignment. It binds variables: WOQL.eq("v:Name", "Alice") unifies v:Name with "Alice". Use eq to bind computed values to variables.
 - WOQL.as is for CSV column mapping (used with WOQL.get/put for data import/export), NOT for variable binding or projection. Never use as to "assign" values to variables.
 - Think declaratively: describe WHAT you want to match, not HOW to compute it step by step. "Find all persons whose age is greater than 30" is a pattern, not a loop.
+- Predicates are both GENERATORS and MATCHERS depending on which arguments are open (unbound) variables vs bound values. WOQL.triple("v:X", "rdf:type", "@schema:Person") with v:X open generates all persons. WOQL.triple("Person/jane", "rdf:type", "v:Type") with a bound subject matches and returns the type. WOQL.triple("Person/jane", "rdf:type", "@schema:Person") with all bound succeeds or fails as a check. This applies broadly: eq, isa, path, sub, member, and many others behave this way.
 
 Example — WRONG (imperative thinking):
   WOQL.eval(0, "v:Counter"), WOQL.while(WOQL.lt("v:Counter", 10), ...)
